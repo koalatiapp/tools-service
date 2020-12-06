@@ -54,13 +54,17 @@ module.exports = class Processor {
         await queue.markAsProcessing(request.id);
         const processingStartTime = Date.now();
 
-        // @TODO: Check if the previous request's tool is destructive, and reload the page if it is.
-        if (!this.previousRequest || this.previousRequest.url != request.url) {
-            // Reset console messages
-            this.consoleMessages = browserManager.getConsoleMessageCollectionTemplate();
+        try {
+            // @TODO: Check if the previous request's tool is destructive, and reload the page if it is.
+            if (!this.previousRequest || this.previousRequest.url != request.url) {
+                // Reset console messages
+                this.consoleMessages = browserManager.getConsoleMessageCollectionTemplate();
 
-            // Load the request's page
-            await browserManager.loadUrlWithRetries(this.page, request.url);
+                // Load the request's page
+                await browserManager.loadUrlWithRetries(this.page, request.url);
+            }
+        } catch (error) {
+            return this.failRequest(error.message);
         }
 
         // Prepare the data that will be provided to the tool
