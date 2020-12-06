@@ -1,5 +1,6 @@
 const { isValidTool } = require('./tool.js');
 
+// Singleton
 class Queue {
     constructor(pool) {
         if (typeof pool != 'object') {
@@ -103,6 +104,49 @@ class Queue {
             SET processed_at = NOW()
             WHERE id = $1
         `, [requestId]);
+    }
+
+    async markAsCompleted(requestId, processingTime) {
+        await this.pool.query(`
+            UPDATE requests
+            SET completed_at = NOW(),
+            processing_time = $1
+            WHERE id = $2
+        `, [processingTime, requestId]);
+    }
+
+    async nonAssignedRequests() {
+        const res = await this.pool.query(`
+            SELECT *
+            FROM requests
+            WHERE processed_at IS NULL
+        `);
+        return res.rows;
+    }
+
+    async nonAssignedCount() {
+        const res = await this.pool.query(`
+            SELECT COUNT(*) AS "count"
+            FROM requests
+            WHERE processed_at IS NULL
+        `);
+        return res.rows[0].count;
+    }
+
+    async getAverageProcessingTimes() {
+        const timesByTool = {};
+        const res = await this.pool.query(`
+            SELECT tool, AVG(processing_time) AS time
+            FROM requests
+            WHERE completed_at IS NOT NULL
+            GROUP BY tool;
+        `);
+
+        for (const row of res.rows) {
+            timesByTool[row.tool] = row.time;
+        }
+
+        return timesByTool;
     }
 }
 

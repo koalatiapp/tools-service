@@ -6,6 +6,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const pool = new Pool();
 const queue = require('./utils/queue')(pool);
+const processorManager = require('./utils/processorManager')();
 const app = express();
 const initializeRoutes = require('./router');
 
