@@ -54,6 +54,7 @@ module.exports = class Processor {
         // Mark the request as being processed to prevent other processors from processing it
         await queue.markAsProcessing(request.id);
         const processingStartTime = Date.now();
+        console.log(`Request ${request.id} is now being processed...`);
 
         try {
             // @TODO: Check if the previous request's tool is destructive, and reload the page if it is.
@@ -91,8 +92,13 @@ module.exports = class Processor {
             await toolInstance.cleanup();
         } catch (error) {
             if (!jsonResults) {
-                // @TODO: Implement a way to notify the tool's developer without failing the request if an error occurs in the cleanup process
                 return this.failRequest("An error has occured while running the tool on your page. This error will be reported to the tool's developer automatically.", error);
+            } else {
+                /*
+                 * If the results are present, it means the error occured during the tool's cleanup() method.
+                 * This isn't worth throwing an error to the end-user, but the developer should be notified.
+                 */
+                Notify.developerError(request, errorMessage, errorData);
             }
         }
 
@@ -109,7 +115,7 @@ module.exports = class Processor {
         Notify.requestError(request, errorMessage);
         Notify.developerError(request, errorMessage, errorData);
 
-        console.error(`Request ${request.id} failed:`, errorData);
+        console.error(`Request ${request.id} failed: ${errorData.message}`);
 
         this.processNextRequest();
     }
@@ -123,7 +129,7 @@ module.exports = class Processor {
         queue.markAsCompleted(request.id, processingTime);
         Notify.requestSuccess(request, jsonResults, processingTime);
 
-        console.log(`Request ${this.previousRequest.id} completed successfully!`);
+        console.log(`Request ${request.id} completed successfully (in ${processingTime} ms)`);
 
         this.processNextRequest();
     }
