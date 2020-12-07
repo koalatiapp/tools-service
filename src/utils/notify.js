@@ -9,7 +9,7 @@ module.exports = class Notify {
                 console.error(error);
             });
         } else {
-            console.error("You must define the WEBHOOK_URL environment variable.");
+            throw new Error("You must define the WEBHOOK_URL environment variable.");
         }
     }
 
