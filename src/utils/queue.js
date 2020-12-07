@@ -18,7 +18,11 @@ class Queue {
         // Handle requests for multiple tools by calling the add method individually for every requested tool
         if (Array.isArray(tool)) {
             for (const singleTool of tool) {
-                this.add({ url, tool: singleTool, priority });
+                this.add({
+                    url: url,
+                    tool: singleTool,
+                    priority: priority
+                });
             }
             return;
         }
@@ -26,13 +30,17 @@ class Queue {
         // Handle requests for multiple URLs by calling the add method individually for every requested URL
         if (Array.isArray(url)) {
             for (const singleUrl of url) {
-                this.add({ url: singleUrl, tool, priority });
+                this.add({
+                    url: singleUrl,
+                    tool: tool,
+                    priority: priority
+                });
             }
             return;
         }
 
-        if (!url || !tool) {
-            throw new Error("Invalid request: missing url and/or tool parameter.");
+        if (!url || !tool || typeof url != 'string' || typeof tool != 'string') {
+            throw new Error(`Invalid request: missing url and/or tool parameter: ${JSON.stringify({ url, tool, priority })}.`);
         }
 
         if (!isValidTool(tool)) {
