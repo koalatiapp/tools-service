@@ -18,7 +18,7 @@ class Queue {
         // Handle requests for multiple tools by calling the add method individually for every requested tool
         if (Array.isArray(tool)) {
             for (const singleTool of tool) {
-                this.add({
+                await this.add({
                     url: url,
                     tool: singleTool,
                     priority: priority
@@ -30,7 +30,7 @@ class Queue {
         // Handle requests for multiple URLs by calling the add method individually for every requested URL
         if (Array.isArray(url)) {
             for (const singleUrl of url) {
-                this.add({
+                await this.add({
                     url: singleUrl,
                     tool: tool,
                     priority: priority
@@ -55,7 +55,7 @@ class Queue {
         if (existingRequest) {
             // If the new request has a higher priority than the existing one, update the existing request to bump its priority.
             if (priority > existingRequest.priority) {
-                this.updateRequestPriority(existingRequest.id, priority);
+                await this.updateRequestPriority(existingRequest.id, priority);
             }
 
             return;

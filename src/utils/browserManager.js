@@ -52,9 +52,17 @@ class BrowserManager {
         return { context, page };
     }
 
-    async hasReachedMaxLoad() {
+    async availableContextSpots() {
+        if (!this.browser && this.browserLaunchingPromise) {
+            await this.browserLaunchingPromise;
+        }
+
         const contexts = this.browser.browserContexts();
-        if (contexts.length >= maxConcurrrentContexts) {
+        return maxConcurrrentContexts - contexts.length;
+    }
+
+    async hasReachedMaxLoad() {
+        if (!(await this.availableContextSpots())) {
             return true;
         }
 
@@ -98,10 +106,6 @@ class BrowserManager {
         if (response.status().toString().substr(0, 1) != '2') {
             throw new Error(`The page at the following URL returned an error ${response.status()}: ${url}`);
         }
-    }
-
-    getMaxConcurrentPages() {
-        return maxConcurrentPages;
     }
 }
 

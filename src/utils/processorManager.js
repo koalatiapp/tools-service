@@ -12,32 +12,35 @@ class ProcessorManager {
 
     async init() {
         const requestCount = await queue.nonAssignedCount();
+        const browserContextSpots = await browserManager.availableContextSpots();
+console.log(requestCount, browserContextSpots);
+        if (requestCount > 0 && browserContextSpots > 0) {
+            const newProcessorsCount = Math.min(requestCount, browserContextSpots);
 
-        if (requestCount > 0) {
-            this.create();
-            // @TODO: Update the processorManager to allow multiple pages/contexts/processors at once.
-            /*
-            for (let i = 0; i < requestCount; i++) {
-                const isBrowserMaxedOut = await browserManager.hasReachedMaxLoad();
-                const processor =
+            for (let i = 0; i < newProcessorsCount; i++) {
+                await new Promise((resolve) => {
+                    this.create();
+                    setTimeout(resolve, 500);
+                });
             }
-            */
         }
     }
 
     create() {
+        console.log(`Creating request processor #${this.processors.length}`);
+
         const processor = new Processor(this);
         this.processors.push(processor);
         return processor;
     }
 
     checkToHandleNewRequest() {
-        this.create();
+        this.init();
     }
 
     kill(processor) {
         const index = this.processors.indexOf(processor);
-        if (index) {
+        if (index != -1) {
             this.processors[index].destroy()
             this.processors.splice(index, 1);
         }

@@ -115,7 +115,7 @@ module.exports = class Processor {
         Notify.requestError(request, errorMessage);
         Notify.developerError(request, errorMessage, errorData);
 
-        console.error(`Request ${request.id} failed: ${errorData}\n`);
+        console.error(`Request ${request.id} failed: ${JSON.stringify(errorData)}\n`);
 
         this.processNextRequest();
     }
