@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const queue = require('./queue')();
 const browserManager = require('./browserManager')();
+const Notify = require('./notify');
 const validator = new (require('@koalati/results-validator'))();
 
 module.exports = class Processor {
@@ -103,7 +104,10 @@ module.exports = class Processor {
 
         this.previousRequest = request;
         this.activeRequest = null;
+
         queue.markAsCompleted(request.id, null);
+        Notify.requestError(request, errorMessage);
+        Notify.developerError(request, errorMessage, errorData);
 
         console.error(`Request ${request.id} failed:`, errorData);
 
@@ -115,11 +119,13 @@ module.exports = class Processor {
 
         this.previousRequest = request;
         this.activeRequest = null;
-        queue.markAsCompleted(request.id, processingTime);
-        this.processNextRequest();
 
-        // @TODO: Submit the results to the websocket server
+        queue.markAsCompleted(request.id, processingTime);
+        Notify.requestSuccess(request, jsonResults, processingTime);
+
         console.log(`Request ${this.previousRequest.id} completed successfully!`);
+
+        this.processNextRequest();
     }
 
     selfDestroy() {

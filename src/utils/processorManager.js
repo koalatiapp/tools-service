@@ -15,6 +15,7 @@ class ProcessorManager {
 
         if (requestCount > 0) {
             this.create();
+            // @TODO: Update the processorManager to allow multiple pages/contexts/processors at once.
             /*
             for (let i = 0; i < requestCount; i++) {
                 const isBrowserMaxedOut = await browserManager.hasReachedMaxLoad();
