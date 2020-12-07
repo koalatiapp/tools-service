@@ -115,7 +115,7 @@ module.exports = class Processor {
         Notify.requestError(request, errorMessage);
         Notify.developerError(request, errorMessage, errorData);
 
-        console.error(`Request ${request.id} failed: ${errorData.message}`);
+        console.error(`Request ${request.id} failed: ${errorData}\n`);
 
         this.processNextRequest();
     }
@@ -129,7 +129,7 @@ module.exports = class Processor {
         queue.markAsCompleted(request.id, processingTime);
         Notify.requestSuccess(request, jsonResults, processingTime);
 
-        console.log(`Request ${request.id} completed successfully (in ${processingTime} ms)`);
+        console.log(`Request ${request.id} completed successfully (in ${processingTime} ms)\n`);
 
         this.processNextRequest();
     }

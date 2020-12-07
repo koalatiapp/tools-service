@@ -5,10 +5,11 @@ module.exports = {
         const responseBody = {
             success: true,
             message: '',
-            data: null,
+            data: {
+                unassignedRequests: await queue.nonAssignedCount(),
+                pendingRequests: await queue.pendingCount(),
+            },
         };
-
-        // @TODO: Implement /status/queue endpoint
 
         res.send(responseBody);
     },

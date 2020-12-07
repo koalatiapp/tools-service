@@ -16,9 +16,17 @@ class Queue {
         }
 
         // Handle requests for multiple tools by calling the add method individually for every requested tool
-        if (typeof tool == 'array') {
+        if (Array.isArray(tool)) {
             for (const singleTool of tool) {
-                this.add({ url, singleTool, priority });
+                this.add({ url, tool: singleTool, priority });
+            }
+            return;
+        }
+
+        // Handle requests for multiple URLs by calling the add method individually for every requested URL
+        if (Array.isArray(url)) {
+            for (const singleUrl of url) {
+                this.add({ url: singleUrl, tool, priority });
             }
             return;
         }
@@ -115,13 +123,14 @@ class Queue {
         `, [processingTime, requestId]);
     }
 
-    async nonAssignedRequests() {
+    async pendingCount() {
         const res = await this.pool.query(`
-            SELECT *
+            SELECT COUNT(*) AS "count"
             FROM requests
-            WHERE processed_at IS NULL
+            WHERE processed_at IS NOT NULL
+            AND completed_at IS NULL
         `);
-        return res.rows;
+        return res.rows[0].count;
     }
 
     async nonAssignedCount() {

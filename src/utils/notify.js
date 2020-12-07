@@ -5,9 +5,11 @@ const webhookUrl = process.env.WEBHOOK_URL || null;
 module.exports = class Notify {
     static _post(body) {
         if (webhookUrl) {
-            return axios.post(webhookUrl, body).catch;
+            return axios.post(webhookUrl, body).catch((error) => {
+                console.error(error);
+            });
         } else {
-            console.error("You must define the WEBHOOK_URL envrionment variable.");
+            console.error("You must define the WEBHOOK_URL environment variable.");
         }
     }
 
