@@ -57,7 +57,10 @@ module.exports = class Processor {
         console.log(`Request ${request.id} is now being processed...`);
 
         try {
-            // @TODO: Check if the previous request's tool is destructive, and reload the page if it is.
+            /**
+             * @TODO: Check if the previous request's tool is destructive, and reload the page if it is.
+             * The page should also be reloaded if the previous request resulted in an error, as the cleanup process might not have been executed.
+             */
             if (!this.previousRequest || this.previousRequest.url != request.url) {
                 // Reset console messages
                 this.consoleMessages = browserManager.getConsoleMessageCollectionTemplate();

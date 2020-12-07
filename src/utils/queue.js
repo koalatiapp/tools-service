@@ -95,6 +95,15 @@ class Queue {
             WHERE processed_at IS NULL`;
         let paramName = null;
 
+        /**
+         * @TODO: prevent processing more than 2-3 requests for the same website at once.
+         * This often ends up slowing down the server and processing time in a very noticeable way.
+         * An easy way to do this would to be to add the request's domain to the queue,
+         * and to add a WHERE in the query which checks for pending requests with the same domain.
+         * Here's how to get the domain from a URL:
+         * https://stackoverflow.com/questions/8498592/extract-hostname-name-from-string
+         */
+
         // To speed up processing, same-page requests are prioritized as they prevent unnecessary page reloads
         if (currentUrl) {
             paramName = '$' + (orderBys.length + 1);
@@ -102,7 +111,12 @@ class Queue {
             data.push(currentUrl);
         }
 
-        // @TODO: replace this with the priority algorithm
+        /**
+         * @TODO: implement the queue's priority algorithm for premium/regular users.
+         * Higher priority requests should be prioritized (processed first).
+         * However, every N high-priority (2+) requests, X low-priority (1) request should be treated.
+         * The N and X number for the algorithm should be environment variables, so it can be changed easily without issuing new commits.
+         */
         orderBys.push('priority DESC');
 
         orderBys.push('received_at ASC');
