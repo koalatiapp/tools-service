@@ -56,10 +56,25 @@ The BrowserManager also offers a few utility methods, such as:
 
 
 ## Webhook notifications
-**:warning: This remains to be documented.**
+After a request is processed, its result must be sent to Koalati's users. This is done via the `Notify` utility class.
+
+The `Notify` utility class definees three static methods, which are defined below. Those methods can be called to send a `POST` request to the URL defined by the `WEBHOOK_URL` environment variable.
+
+- `requestSuccess(request, results, processingTime)`:submits the results of a request so they can be communicated to the Koalati user(s) who requested them. This request can be identified in the webhook's receiving script by the `type` POST variable, which is set at `toolSuccess`.
+- `requestError(request, message)`: submits data about an error so it can be communicated to the Koalati user(s) who are expecting the results of the request. This request can be identified in the webhook's receiving script by the `type` POST variable, which is set at `toolError`.
+- `developerError(request, message, errorData = null)`: submits data about an error so it can be communicated to the tool's developer(s). This request can be identified in the webhook's receiving script by the `type` POST variable, which is set at `developerError`.
 
 ## Available endpoints
-**:warning: This remains to be documented.**
+Below are the endpoints made available by the tools service. For more information, take a look at [the routing script](https://github.com/koalatiapp/tools-service/blob/master/src/router/index.js).
+
+### Tools endpoints
+- `/tools/request`: accepts a request object with the following properties: `url`, `tool`, and `priority`. Both `url` and `tool` can be either a string or an array of strings. `priority` is expected to be an integer, an defaults to `1` when invalid or unspecified.
+
+### Status endpoints
+- `/status/up`: returns the uptime of the service. 
+- `/status/queue`: returns the number of pending and unassigned requests in the queue.
+- `/status/time-estimates`: returns processing & waiting time estimates for each tool, for both low and high priority requests.
+
 
 ## Environment variables
 
