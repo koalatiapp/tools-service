@@ -3,6 +3,7 @@ const tools = require('../controllers/tools');
 
 module.exports = (app) => {
     // Status controller
+    app.get('/status/up', status.up);
     app.get('/status/queue', status.queue);
     app.get('/status/time-estimates', status.timeEstimates);
 

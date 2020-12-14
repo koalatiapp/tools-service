@@ -9,10 +9,15 @@ const queue = require('./utils/queue')(pool);
 const processorManager = require('./utils/processorManager')();
 const app = express();
 const initializeRoutes = require('./router');
+const initializeAuthentication = require('./utils/authentication');
 
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Initialize the app
+initializeAuthentication(app);
 initializeRoutes(app);
 
+// Start listening for requests...
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}...`);
 });
