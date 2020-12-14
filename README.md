@@ -76,10 +76,11 @@ Below are the endpoints made available by the tools service. For more informatio
 - `/status/time-estimates`: returns processing & waiting time estimates for each tool, for both low and high priority requests.
 
 
-## Authorization
+## Authentication
 All requests to the tools service must require authentication.
 
-To authenticate your requests, add a Bearer token header with a JWT containing the access token.
+To authenticate your requests, you must add a Bearer token header. This header should contain a JWT, in the payload of which the access token is defined under the  `access_token` key. (ex.: `{ access_token: "my_access_token" }`).
+
 The secret key for the encoding of the JWT is defined in the `JWT_SECRET` environment variable, and the access token is defined in the `AUTH_ACCESS_TOKEN` environment variable.
 
 
