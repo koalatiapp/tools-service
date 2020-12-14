@@ -165,16 +165,39 @@ class Queue {
     }
 
     async getAverageProcessingTimes() {
-        const timesByTool = {};
-        const res = await this.pool.query(`
-            SELECT tool, AVG(processing_time) AS time
+        const timesByTool = {
+            lowPriority: {},
+            highPriority: {},
+        };
+        const lowPriorityResult = await this.pool.query(`
+            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
             FROM requests
             WHERE completed_at IS NOT NULL
-            GROUP BY tool;
+            AND priority = 1
+            GROUP BY tool
+            LIMIT 10000;
+        `);
+        const highPriorityResult = await this.pool.query(`
+            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
+            FROM requests
+            WHERE completed_at IS NOT NULL
+            AND priority > 1
+            GROUP BY tool
+            LIMIT 10000;
         `);
 
-        for (const row of res.rows) {
-            timesByTool[row.tool] = row.time;
+        for (const row of lowPriorityResult.rows) {
+            timesByTool.lowPriority[row.tool] = {
+                processing_time: row.processing_time,
+                completion_time: row.completion_time
+            };
+        }
+
+        for (const row of highPriorityResult.rows) {
+            timesByTool.highPriority[row.tool] = {
+                processing_time: row.processing_time,
+                completion_time: row.completion_time
+            };
         }
 
         return timesByTool;

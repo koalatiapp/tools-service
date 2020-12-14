@@ -13,7 +13,7 @@ class ProcessorManager {
     async init() {
         const requestCount = await queue.nonAssignedCount();
         const browserContextSpots = await browserManager.availableContextSpots();
-console.log(requestCount, browserContextSpots);
+
         if (requestCount > 0 && browserContextSpots > 0) {
             const newProcessorsCount = Math.min(requestCount, browserContextSpots);
 

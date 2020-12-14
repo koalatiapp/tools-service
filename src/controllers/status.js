@@ -1,6 +1,15 @@
 const queue = require('../utils/queue')();
 
 module.exports = {
+    up: async (req, res) => {
+        const responseBody = {
+            success: true,
+            uptime: process.uptime(),
+        };
+
+        res.send(responseBody);
+    },
+
     queue: async (req, res) => {
         const responseBody = {
             success: true,
