@@ -5,18 +5,18 @@
 *     - contain the "koalati" keyword in its package.json
 */
 module.exports.isValidTool = function (packageName) {
-    let toolExistsAndIsInstalled = true;
+	let toolExistsAndIsInstalled = true;
 
-    try {
-        const toolClass = require(packageName);
-        const toolKeywords = require(`${packageName}/package.json`).keywords;
+	try {
+		require(packageName);
+		const toolKeywords = require(`${packageName}/package.json`).keywords;
 
-        if (!Array.isArray(toolKeywords) || toolKeywords.map(str => str.toLowerCase()).indexOf('koalati') == -1) {
-            toolExistsAndIsInstalled = false;
-        }
-    } catch (error) {
-        toolExistsAndIsInstalled = false;
-    }
+		if (!Array.isArray(toolKeywords) || toolKeywords.map(str => str.toLowerCase()).indexOf("koalati") == -1) {
+			toolExistsAndIsInstalled = false;
+		}
+	} catch (error) {
+		toolExistsAndIsInstalled = false;
+	}
 
-    return toolExistsAndIsInstalled;
-}
+	return toolExistsAndIsInstalled;
+};

@@ -1,12 +1,12 @@
-const status = require('../controllers/status');
-const tools = require('../controllers/tools');
+const status = require("../controllers/status");
+const tools = require("../controllers/tools");
 
 module.exports = (app) => {
-    // Status controller
-    app.get('/status/up', status.up);
-    app.get('/status/queue', status.queue);
-    app.get('/status/time-estimates', status.timeEstimates);
+	// Status controller
+	app.get("/status/up", status.up);
+	app.get("/status/queue", status.queue);
+	app.get("/status/time-estimates", status.timeEstimates);
 
-    // Tools controller
-    app.post('/tools/request', tools.request);
+	// Tools controller
+	app.post("/tools/request", tools.request);
 };
