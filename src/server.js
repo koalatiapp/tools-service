@@ -1,12 +1,17 @@
 require("dotenv").config();
 
+const MOCK_MODE = process.env.MOCK_API == "true";
 const PORT = process.env.PORT || 8080;
-const { Pool } = require("pg");
 const express = require("express");
 const bodyParser = require("body-parser");
-const pool = new Pool();
-require("./utils/queue")(pool);
-require("./utils/processorManager")();
+
+if (!MOCK_MODE) {
+	const { Pool } = require("pg");
+	const pool = new Pool();
+	require("./utils/queue")(pool);
+	require("./utils/processorManager")();
+}
+
 const app = express();
 const initializeRoutes = require("./router");
 const initializeAuthentication = require("./utils/authentication");
@@ -19,5 +24,6 @@ initializeRoutes(app);
 
 // Start listening for requests...
 app.listen(PORT, () => {
+	console.log(`Running on ${MOCK_MODE ? "MOCK" : "PRODUCTION"} mode.`);
 	console.log(`Server listening on port ${PORT}...`);
 });

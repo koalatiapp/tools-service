@@ -24,7 +24,7 @@ module.exports = (app) => {
      * When the bearer JWT is missing or invalid, express-jt throws an UnauthorizedError.
      * Let's display a cleaner message when that happens.
      */
-	app.use(function (err, req, res) {
+	app.use(function (err, _req, res, _next) {
 		if (err.name === "UnauthorizedError") {
 			res.status(401).send("Invalid bearer token.");
 		}

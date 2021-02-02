@@ -1,5 +1,13 @@
-const status = require("../controllers/status");
-const tools = require("../controllers/tools");
+let status;
+let tools;
+
+if (process.env.MOCK_API == "true") {
+	status = require("../controllers/mock/status");
+	tools = require("../controllers/mock/tools");
+} else {
+	status = require("../controllers/status");
+	tools = require("../controllers/tools");
+}
 
 module.exports = (app) => {
 	// Status controller
