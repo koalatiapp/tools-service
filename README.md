@@ -84,19 +84,29 @@ To authenticate your requests, you must add a Bearer token header. This header s
 The secret key for the encoding of the JWT is defined in the `JWT_SECRET` environment variable, and the access token is defined in the `AUTH_ACCESS_TOKEN` environment variable.
 
 
+## Mock mode
+Mock mode can be enabled by setting the `MOCK_API` environment variable to `true`.
+When you do so, all of the responses will be sent right away without actually processing anything.
+
+This doesn't change anything for request to the `/status/up` endpoints, but all other endpoints which depend on the queue will send mock responses.
+This can be useful when you want to test API clients for the tool service without actually setting up a database and spending resources to process the requests.
+
 ## Environment variables
 
 The tools web service requires the following environment variables to be defined.
 An `.env` file can be added at the root of the project to define these; simply use the provided `.env.dist` file as a template.
 
-| **Environment variable** | **Type** | **Description**                       |
-|--------------------------|----------|---------------------------------------|
-| PORT                     | Integer  | Port number for the web service       |
-| WEBHOOK_URL              | String   | URL to push completions and errors to |
-| JWT_SECRET               | String   | Secret key for the JWT (HS256)        |
-| AUTH_ACCESS_TOKEN        | String   | Access token used for authorization   |
-| PGHOST                   | String   | Postgres database domain or IP        |
-| PGUSER                   | String   | Postgres database username            |
-| PGPASSWORD               | String   | Postgres database password            |
-| PGDATABASE               | String   | Postgres database name                |
-| PGPORT                   | Integer  | Postgres database port number         |
+| **Environment variable** | **Type** | **Description**                                      |
+|--------------------------|----------|------------------------------------------------------|
+| PORT                     | Integer  | Port number for the web service                      |
+| WEBHOOK_URL              | String   | URL to push completions and errors to                |
+| JWT_SECRET               | String   | Secret key for the JWT (HS256)                       |
+| AUTH_ACCESS_TOKEN        | String   | Access token used for authorization                  |
+| MOCK_API                 | Boolean  | Set to `true` to mock responses without processing   |
+| PGHOST *                 | String   | Postgres database domain or IP                       |
+| PGUSER *                 | String   | Postgres database username                           |
+| PGPASSWORD *             | String   | Postgres database password                           |
+| PGDATABASE *             | String   | Postgres database name                               |
+| PGPORT *                 | Integer  | Postgres database port number                        |
+
+ℹ️ _The variables followed by an asterisk are optional when running the service in MOCK mode._
