@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "Web service that handles requests for all website testing on Koalati.",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -40,6 +41,7 @@
     "qs": "^6.9.4"
   },
   "devDependencies": {
-    "eslint": "^7.19.0"
+    "eslint": "^7.19.0",
+    "mocha": "^8.2.1"
   }
 }

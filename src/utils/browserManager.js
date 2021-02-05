@@ -7,7 +7,6 @@ class BrowserManager {
 	constructor() {
 		this.browser = null;
 		this.browserLaunchingPromise = null;
-		this.launchBrowser();
 	}
 
 	async launchBrowser() {
@@ -27,16 +26,22 @@ class BrowserManager {
 
 		this.browser = await this.browserLaunchingPromise;
 		this.browser.on("disconnected", () => {
-			managerInstance.launchBrowser();
+			managerInstance.browser = null;
 		});
 
 		this.browserLaunchingPromise = null;
 	}
 
-	async launchPage() {
+	async ensureBrowserIsUp() {
 		if (!this.browser) {
 			await this.launchBrowser();
-		} else if (await this.hasReachedMaxLoad()) {
+		}
+	}
+
+	async launchPage() {
+		await this.ensureBrowserIsUp();
+
+		if (await this.hasReachedMaxLoad()) {
 			throw new Error("Cannot launch any more pages or browser contexts: the maximum load is reached.");
 		}
 
@@ -53,12 +58,11 @@ class BrowserManager {
 	}
 
 	async availableContextSpots() {
-		if (!this.browser && this.browserLaunchingPromise) {
-			await this.browserLaunchingPromise;
-		}
+		await this.ensureBrowserIsUp();
 
 		const contexts = this.browser.browserContexts();
-		return maxConcurrrentContexts - contexts.length;
+		// Puppeteer always has one context up and running by default - don't count it.
+		return maxConcurrrentContexts - (contexts.length - 1);
 	}
 
 	async hasReachedMaxLoad() {
@@ -96,7 +100,6 @@ class BrowserManager {
 				response = await page.goto(url, { waitUntil: "networkidle0",  timeout: timeoutDuration });
 				break;
 			} catch (error) {
-				console.error(error);
 				if (attemptCount == maxPageLoadAttempts) {
 					throw new Error(`The page at the following URL could not be loaded within ${maxPageLoadAttempts} attempts (${Math.round((timeoutDuration * maxPageLoadAttempts) / 1000)} seconds wait time): ${url}`);
 				}
@@ -106,6 +109,27 @@ class BrowserManager {
 		if (response.status().toString().substr(0, 1) != "2") {
 			throw new Error(`The page at the following URL returned an error ${response.status()}: ${url}`);
 		}
+	}
+
+	async close()
+	{
+		if (this.browserLaunchingPromise !== null) {
+			await this.browserLaunchingPromise;
+		}
+
+		if (this.browser) {
+			await this.browser.close();
+		}
+	}
+
+	getMaxConcurrentPages()
+	{
+		return maxConcurrentPages;
+	}
+
+	getMaxConcurrentContexts()
+	{
+		return maxConcurrrentContexts;
 	}
 }
 
