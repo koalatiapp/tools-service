@@ -7,7 +7,10 @@ class ProcessorManager {
 	constructor() {
 		console.log("Proccessor manager initialized");
 		this.processors = [];
-		this.init();
+		this.init().catch((error) => {
+			console.error(error);
+			process.exit(0);
+		});
 	}
 
 	async init() {
