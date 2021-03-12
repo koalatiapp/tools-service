@@ -1,0 +1,14 @@
+version: "3.4"
+
+services:
+  node:
+    build:
+      context: .
+      target: express_node
+      args:
+        NODE_VERSION: ${NODE_VERSION:-14}
+    environment:
+      PORT: 3000
+    restart: unless-stopped
+    ports:
+      - ${PORT:-3000}:3000

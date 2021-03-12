@@ -1,0 +1,28 @@
+version: "3.4"
+
+# Development environment override
+services:
+  node:
+    depends_on:
+      - database
+
+  database:
+    image: postgres:${PGVERSION:-13}
+    restart: always
+    environment:
+      POSTGRES_USER: ${PGUSER:-postgres}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-ChangeMe123}
+      POSTGRES_DB: ${PGDATABASE:-postgres}
+    volumes:
+      - db-data:/var/lib/postgresql:rw
+    ports:
+      - 5432:5432
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+volumes:
+  db-data:

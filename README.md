@@ -1,6 +1,12 @@
-# Koalati tools web service
+# Koalati Tools API
 
 This is the web service that handles requests for all website testing on Koalati.
+
+## Getting started
+The easiest way to get started is to use Docker Compose with the provided configurations.
+
+1. Create and fill in your own `.env` file at the root of the project (take a look at the `.env.dist` file and to the [Environment variables](#environment-variables) section for reference).
+2. Launch the API service by running `docker-compose up`.
 
 ## How it works
 
