@@ -20,6 +20,7 @@ class BrowserManager {
 		this.browserLaunchingPromise = puppeteer.launch({
 			args: [
 				"--disable-web-security",
+				"--no-sandbox"
 			],
 			headless: true
 		});
