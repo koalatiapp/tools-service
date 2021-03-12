@@ -98,7 +98,7 @@ An `.env` file can be added at the root of the project to define these; simply u
 
 | **Environment variable** | **Type** | **Description**                                      |
 |--------------------------|----------|------------------------------------------------------|
-| PORT                     | Integer  | Port number for the web service                      |
+| PORT                     | Integer  | Port number for the web service (default: `3000`)    |
 | WEBHOOK_URL              | String   | URL to push completions and errors to                |
 | JWT_SECRET               | String   | Secret key for the JWT (HS256)                       |
 | AUTH_ACCESS_TOKEN        | String   | Access token used for authorization                  |

@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const MOCK_MODE = process.env.MOCK_API == "true";
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 const express = require("express");
 const bodyParser = require("body-parser");
 
