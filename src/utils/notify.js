@@ -6,7 +6,9 @@ const webhookPath = process.env.WEBHOOK_PATH || null;
 module.exports = class Notify {
 	static _post(body) {
 		if (webhookHost) {
-			const postData = querystring.stringify(body);
+			const postData = querystring.stringify({
+				payload: JSON.stringify(body)
+			});
 			const options = {
 				hostname: webhookHost,
 				port: 443,

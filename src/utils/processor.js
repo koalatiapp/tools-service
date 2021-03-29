@@ -130,7 +130,7 @@ module.exports = class Processor {
 		this.activeRequest = null;
 
 		queue.markAsCompleted(request.id, processingTime);
-		Notify.requestSuccess(request, jsonResults, processingTime);
+		Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
 
 		console.log(`Request ${request.id} completed successfully (in ${processingTime} ms)\n`);
 
