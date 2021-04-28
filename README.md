@@ -116,3 +116,21 @@ An `.env` file can be added at the root of the project to define these; simply u
 | PGPORT *                 | Integer  | Postgres database port number                        |
 
 ℹ️ _The variables followed by an asterisk are optional when running the service in MOCK mode._
+
+## Initializing the queue's database
+To get started, you'll need to manually create the queue's table in the database if it doesn't exist already.  
+
+You can do so by using the following query:
+
+```pgsql
+CREATE TABLE requests (
+    id SERIAL PRIMARY KEY,
+    url TEXT,
+    priority SMALLINT DEFAULT 1,
+    tool VARCHAR(255),
+    received_at TIMESTAMP DEFAULT now(),
+    processed_at TIMESTAMP NULL,
+    completed_at TIMESTAMP NULL,
+    processing_time BIGINT NULL
+);
+```
