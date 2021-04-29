@@ -2,6 +2,8 @@
 ARG NODE_VERSION=14
 FROM node:${NODE_VERSION} as express_node
 
+ENV NODE_ENV=${NODE_ENV}
+
 # Create app directory
 WORKDIR /app
 
