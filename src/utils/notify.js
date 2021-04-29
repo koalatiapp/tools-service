@@ -1,5 +1,5 @@
 const querystring = require("querystring");
-const https = require("https");
+const http = require("http");
 const webhookHost = process.env.WEBHOOK_HOST || null;
 const webhookPath = process.env.WEBHOOK_PATH || null;
 
@@ -11,18 +11,15 @@ module.exports = class Notify {
 			});
 			const options = {
 				hostname: webhookHost,
-				port: 443,
 				path: webhookPath,
 				method: "POST",
 				headers: {
 					"Content-Type": "application/x-www-form-urlencoded",
 					"Content-Length": postData.length
 				},
-				rejectUnauthorized: false,
-				requestCert: true,
 				agent: false
 			};
-			const req = https.request(options);
+			const req = http.request(options);
 
 			req.on("error", (e) => {
 				console.error(e);
