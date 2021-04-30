@@ -1,4 +1,5 @@
 const { isValidTool } = require("./tool.js");
+const psl = require("psl");
 
 // Singleton
 class Queue {
@@ -61,10 +62,14 @@ class Queue {
 			return;
 		}
 
+		// Extract the hostname from the URL
+		const domainInfo = psl.parse(url);
+		const hostname = [domainInfo.subdomain, domainInfo.domain].filter(part => !!(part ?? "").length).join(".");
+
 		// Insert the request in the database
 		await this.pool.query(`
-            INSERT INTO requests (url, tool, priority) VALUES ($1, $2, $3)
-        `, [url, tool, priority]);
+            INSERT INTO requests (url, hostname, tool, priority) VALUES ($1, $2, $3)
+        `, [url, hostname, tool, priority]);
 	}
 
 	async getUnprocessedMatchingRequest(url, tool) {
@@ -89,25 +94,21 @@ class Queue {
 	async next(currentUrl = null) {
 		const data = [];
 		const orderBys = [];
+		/**
+         * The base query prevents processing more than 2 request for the same website at once.
+         * This often ends up slowing down the website's server in a very noticeable way, which ends up slowing the service for all.
+         */
 		const baseQuery = `
             SELECT *
-            FROM requests
-            WHERE processed_at IS NULL`;
-		let paramName = null;
-
-		/**
-         * @TODO: prevent processing more than 2-3 requests for the same website at once.
-         * This often ends up slowing down the server and processing time in a very noticeable way.
-         * An easy way to do this would to be to add the request's domain to the queue,
-         * and to add a WHERE in the query which checks for pending requests with the same domain.
-         * Here's how to get the domain from a URL:
-         * https://stackoverflow.com/questions/8498592/extract-hostname-name-from-string
-         */
+            FROM requests r
+			LEFT JOIN requests shr ON shr.hostname = r.hostname AND shr.id != r.id AND shr.processed_at IS NOT NULL AND shr.completed_at IS NULL
+            WHERE R.processed_at IS NULL
+			AND COUNT(shr.id) <= 1`;
 
 		// To speed up processing, same-page requests are prioritized as they prevent unnecessary page reloads
 		if (currentUrl) {
-			paramName = "$" + (orderBys.length + 1);
-			orderBys.push(`CASE WHEN url = ${paramName} THEN 0 ELSE 1 END ASC`);
+			const urlParamName = "$" + (orderBys.length + 1);
+			orderBys.push(`CASE WHEN R.url = ${urlParamName} THEN 0 ELSE 1 END ASC`);
 			data.push(currentUrl);
 		}
 

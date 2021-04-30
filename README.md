@@ -26,7 +26,7 @@ However, the `priority` level is not the only factor in the processing order alg
 This ensures that free users still get reasonable loading times, even if premium users are prioritized. The _nth_ number is defined by an environment variable ([see the Environment variables section](#environment-variables)).
 
 Another factor that is taken into account is server load for the websites that being tested. To prevent overloading others servers,
-no more than 3 requests of the same website will be processed at the same time. (**:warning: this has not yet been implemented**)
+no more than 2 requests of the same website will be processed at the same time.
 
 Finally, there is one last factor at play in the queue's processing order. If a request has just been completed by a `Processor`,
 that request's URL is provided to the `Queue.next()` method, and the Queue will prioritize other requests on the same page before all others.
@@ -125,12 +125,13 @@ An `.env` file can be added at the root of the project to define these; simply u
 ## Initializing the queue's database
 To get started, you'll need to manually create the queue's table in the database if it doesn't exist already.  
 
-You can do so by using the following query:
+You can do so by using the following queries:
 
 ```pgsql
 CREATE TABLE requests (
     id SERIAL PRIMARY KEY,
     url TEXT,
+    hostname VARCHAR(255),
     priority SMALLINT DEFAULT 1,
     tool VARCHAR(255),
     received_at TIMESTAMP DEFAULT now(),
@@ -138,4 +139,5 @@ CREATE TABLE requests (
     completed_at TIMESTAMP NULL,
     processing_time BIGINT NULL
 );
+CREATE INDEX "requests_hostname" ON "requests" USING btree ("hostname");
 ```
