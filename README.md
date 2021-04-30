@@ -5,8 +5,9 @@ This is the web service that handles requests for all website testing on Koalati
 ## Getting started
 The easiest way to get started is to use Docker Compose with the provided configurations.
 
-1. Create and fill in your own `.env` file at the root of the project (take a look at the `.env.dist` file and to the [Environment variables](#environment-variables) section for reference).
-2. Launch the API service by running `docker-compose up`.
+1. Create or setup the Postgres database (check out [Initializing the queue's database](#initializing-the-queues-database))
+2. Create and fill in your own `.env` file at the root of the project (take a look at the `.env.dist` file and to the [Environment variables](#environment-variables) section for reference).
+3. Launch the API service by running `docker-compose up`.
 
 ## How it works
 
@@ -102,21 +103,24 @@ This can be useful when you want to test API clients for the tool service withou
 The tools web service requires the following environment variables to be defined.
 An `.env` file can be added at the root of the project to define these; simply use the provided `.env.dist` file as a template.
 
-| **Environment variable** | **Type** | **Description**                                      |
-|--------------------------|----------|------------------------------------------------------|
-| PORT                     | Integer  | Port number for the web service (default: `3000`)    |
-| WEBHOOK_HOST             | String   | Webhook hostname to push completions and errors to   |
-| WEBHOOK_PATH             | String   | Webhook URL path to push completions and errors to   |
-| JWT_SECRET               | String   | Secret key for the JWT (HS256)                       |
-| AUTH_ACCESS_TOKEN        | String   | Access token used for authorization                  |
-| MOCK_API                 | Boolean  | Set to `true` to mock responses without processing   |
-| PGHOST *                 | String   | Postgres database domain or IP                       |
-| PGUSER *                 | String   | Postgres database username                           |
-| PGPASSWORD *             | String   | Postgres database password                           |
-| PGDATABASE *             | String   | Postgres database name                               |
-| PGPORT *                 | Integer  | Postgres database port number                        |
+| **Environment variable**        | **Type** | **Description**                                                                                         |
+|---------------------------------|----------|---------------------------------------------------------------------------------------------------------|
+| PORT                            | Integer  | Port number for the web service (default: `3000`)                                                       |
+| WEBHOOK_HOST                    | String   | Webhook hostname to push completions and errors to                                                      |
+| WEBHOOK_PATH                    | String   | Webhook URL path to push completions and errors to                                                      |
+| JWT_SECRET                      | String   | Secret key for the JWT (HS256)                                                                          |
+| AUTH_ACCESS_TOKEN               | String   | Access token used for authorization                                                                     |
+| MOCK_API                        | Boolean  | Set to `true` to mock responses without processing                                                      |
+| PGHOST *                        | String   | Postgres database domain or IP                                                                          |
+| PGUSER *                        | String   | Postgres database username                                                                              |
+| PGPASSWORD *                    | String   | Postgres database password                                                                              |
+| PGDATABASE *                    | String   | Postgres database name                                                                                  |
+| PGPORT *                        | Integer  | Postgres database port number                                                                           |
+| BROWSER_MAX_CONCURRENT_PAGES    | Integer  | Maximum number of pages that can be open at once. (default: `3`)                                        |
+| BROWSER_MAX_CONCURRENT_CONTEXTS | Integer  | Maximum number of browsing contexts that can be open at once. (default: `BROWSER_MAX_CONCURRENT_PAGES`) |
 
 ℹ️ _The variables followed by an asterisk are optional when running the service in MOCK mode._
+
 
 ## Initializing the queue's database
 To get started, you'll need to manually create the queue's table in the database if it doesn't exist already.  

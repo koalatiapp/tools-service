@@ -1,5 +1,5 @@
 const puppeteer = require("puppeteer");
-const maxConcurrentPages = process.env.BROWSER_MAX_CONCURRENT_PAGES || 5;
+const maxConcurrentPages = process.env.BROWSER_MAX_CONCURRENT_PAGES || 3;
 const maxConcurrrentContexts = process.env.BROWSER_MAX_CONCURRENT_CONTEXTS || maxConcurrentPages;
 
 // Singleton
