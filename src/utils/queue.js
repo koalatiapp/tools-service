@@ -99,11 +99,12 @@ class Queue {
          * This often ends up slowing down the website's server in a very noticeable way, which ends up slowing the service for all.
          */
 		const baseQuery = `
-            SELECT *
+            SELECT r.*
             FROM requests r
 			LEFT JOIN requests shr ON shr.hostname = r.hostname AND shr.id != r.id AND shr.processed_at IS NOT NULL AND shr.completed_at IS NULL
             WHERE R.processed_at IS NULL
-			AND COUNT(shr.id) <= 1`;
+			GROUP BY r.id
+			HAVING COUNT(shr.id) <= 1`;
 
 		// To speed up processing, same-page requests are prioritized as they prevent unnecessary page reloads
 		if (currentUrl) {
