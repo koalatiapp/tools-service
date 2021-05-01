@@ -68,7 +68,7 @@ class Queue {
 
 		// Insert the request in the database
 		await this.pool.query(`
-            INSERT INTO requests (url, hostname, tool, priority) VALUES ($1, $2, $3)
+            INSERT INTO requests (url, hostname, tool, priority) VALUES ($1, $2, $3, $4)
         `, [url, hostname, tool, priority]);
 	}
 
