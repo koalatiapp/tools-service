@@ -1,5 +1,4 @@
 const { isValidTool } = require("./tool.js");
-const psl = require("psl");
 
 // Singleton
 class Queue {
@@ -63,8 +62,7 @@ class Queue {
 		}
 
 		// Extract the hostname from the URL
-		const domainInfo = psl.parse(url);
-		const hostname = [domainInfo.subdomain, domainInfo.domain].filter(part => !!(part ?? "").length).join(".");
+		const hostname = (new URL(url)).hostname;
 
 		// Insert the request in the database
 		await this.pool.query(`
