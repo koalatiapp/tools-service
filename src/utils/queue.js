@@ -146,7 +146,7 @@ class Queue {
 	}
 
 	async markAsProcessing(requestId) {
-		await this.pool.query(`
+		return await this.pool.query(`
             UPDATE requests
             SET processed_at = NOW(),
             processed_by = $1
@@ -155,7 +155,7 @@ class Queue {
 	}
 
 	async markAsCompleted(requestId, processingTime) {
-		await this.pool.query(`
+		return await this.pool.query(`
             UPDATE requests
             SET completed_at = NOW(),
             processing_time = $1

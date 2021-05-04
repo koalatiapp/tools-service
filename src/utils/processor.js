@@ -88,14 +88,14 @@ module.exports = class Processor {
 			const validationErrors = validator.checkResults(toolInstance.results);
 
 			if (validationErrors.length) {
-				return this.failRequest("The tool's results were invalid. This error will be reported to the tool's developer automatically.", validationErrors);
+				return await this.failRequest("The tool's results were invalid. This error will be reported to the tool's developer automatically.", validationErrors);
 			}
 
 			jsonResults = JSON.stringify(toolInstance.results);
 			await toolInstance.cleanup();
 		} catch (error) {
 			if (!jsonResults) {
-				return this.failRequest("An error has occured while running the tool on your page. This error will be reported to the tool's developer automatically.", error);
+				return await this.failRequest("An error has occured while running the tool on your page. This error will be reported to the tool's developer automatically.", error);
 			} else {
 				/*
                  * If the results are present, it means the error occured during the tool's cleanup() method.
@@ -105,16 +105,16 @@ module.exports = class Processor {
 			}
 		}
 
-		return this.completeRequest(jsonResults, Date.now() - processingStartTime);
+		return await this.completeRequest(jsonResults, Date.now() - processingStartTime);
 	}
 
-	failRequest(errorMessage, errorData = null) {
+	async failRequest(errorMessage, errorData = null) {
 		const request = Object.assign({}, this.activeRequest);
 
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		queue.markAsCompleted(request.id, null);
+		await queue.markAsCompleted(request.id, null);
 		Notify.requestError(request, errorMessage);
 		Notify.developerError(request, errorMessage, errorData);
 
@@ -123,13 +123,13 @@ module.exports = class Processor {
 		this.processNextRequest();
 	}
 
-	completeRequest(jsonResults, processingTime) {
+	async completeRequest(jsonResults, processingTime) {
 		const request = Object.assign({}, this.activeRequest);
 
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		queue.markAsCompleted(request.id, processingTime);
+		await queue.markAsCompleted(request.id, processingTime);
 		Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
 
 		console.log(`Request ${request.id} completed successfully (in ${processingTime} ms)\n`);

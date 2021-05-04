@@ -46,6 +46,7 @@ class ProcessorManager {
 		if (index != -1) {
 			this.processors[index].destroy();
 			this.processors.splice(index, 1);
+			console.log(`Killed a processor, ${this.processors.length} left.`);
 		}
 	}
 }
