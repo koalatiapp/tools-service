@@ -136,7 +136,7 @@ CREATE TABLE requests (
     priority SMALLINT DEFAULT 1,
     tool VARCHAR(255),
     received_at TIMESTAMP DEFAULT now(),
-    processed_by character(40) NOT NULL,
+    processed_by character(40) NULL,
     processed_at TIMESTAMP NULL,
     completed_at TIMESTAMP NULL,
     processing_time BIGINT NULL

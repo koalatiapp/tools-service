@@ -115,7 +115,6 @@ class Queue {
 				AND sameHostSameProcessRequest.id != r.id
 				AND sameHostSameProcessRequest.processed_at IS NOT NULL
 				AND sameHostSameProcessRequest.completed_at IS NULL
-				AND sameHostSameProcessRequest.processed_by = r.processed_by
 				AND sameHostSameProcessRequest.processed_by = $1
             WHERE R.processed_at IS NULL
 			GROUP BY r.id
