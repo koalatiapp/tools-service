@@ -118,6 +118,7 @@ An `.env` file can be added at the root of the project to define these; simply u
 | PGPORT *                        | Integer  | Postgres database port number                                                                           |
 | BROWSER_MAX_CONCURRENT_PAGES    | Integer  | Maximum number of pages that can be open at once. (default: `3`)                                        |
 | BROWSER_MAX_CONCURRENT_CONTEXTS | Integer  | Maximum number of browsing contexts that can be open at once. (default: `BROWSER_MAX_CONCURRENT_PAGES`) |
+| MAX_CONCURRENT_SAME_HOST_REQUESTS | Integer  | Maximum number of requests for the same hostname that can be processed at once, shared across however many instances of this service. (default: `10`) |
 
 ℹ️ _The variables followed by an asterisk are optional when running the service in MOCK mode._
 
@@ -135,9 +136,11 @@ CREATE TABLE requests (
     priority SMALLINT DEFAULT 1,
     tool VARCHAR(255),
     received_at TIMESTAMP DEFAULT now(),
+    processed_by character(40) NOT NULL,
     processed_at TIMESTAMP NULL,
     completed_at TIMESTAMP NULL,
     processing_time BIGINT NULL
 );
 CREATE INDEX "requests_hostname" ON "requests" USING btree ("hostname");
+CREATE INDEX "requests_processed_by" ON "requests" USING btree ("processed_by");
 ```

@@ -1,4 +1,7 @@
+const crypto = require("crypto");
 const { isValidTool } = require("./tool.js");
+const processIdentifier = crypto.randomBytes(20).toString("hex");
+const MAX_CONCURRENT_SAME_HOST_REQUESTS = parseInt(process.env.MAX_CONCURRENT_SAME_HOST_REQUESTS ?? "10");
 
 // Singleton
 class Queue {
@@ -90,23 +93,38 @@ class Queue {
 	}
 
 	async next(currentUrl = null) {
-		const data = [];
+		const data = [processIdentifier];
 		const orderBys = [];
 		/**
-         * The base query prevents processing more than 2 request for the same website at once.
+         * The base query prevents processing more than [MAX_CONCURRENT_SAME_HOST_REQUESTS] requests for the same website at once.
          * This often ends up slowing down the website's server in a very noticeable way, which ends up slowing the service for all.
+		 *
+		 * It also prevents single instance of the tools service from processing multiple requests to the same host at once, as this
+		 * often affects performance as well (both locally on the browser, and remotely on the website's server due to session locks).
          */
 		const baseQuery = `
             SELECT r.*
             FROM requests r
-			LEFT JOIN requests shr ON shr.hostname = r.hostname AND shr.id != r.id AND shr.processed_at IS NOT NULL AND shr.completed_at IS NULL
+			LEFT JOIN requests sameHostRequest
+				ON sameHostRequest.hostname = r.hostname
+				AND sameHostRequest.id != r.id
+				AND sameHostRequest.processed_at IS NOT NULL
+				AND sameHostRequest.completed_at IS NULL
+			LEFT JOIN requests sameHostSameProcessRequest
+				ON sameHostSameProcessRequest.hostname = r.hostname
+				AND sameHostSameProcessRequest.id != r.id
+				AND sameHostSameProcessRequest.processed_at IS NOT NULL
+				AND sameHostSameProcessRequest.completed_at IS NULL
+				AND sameHostSameProcessRequest.processed_by = r.processed_by
+				AND sameHostSameProcessRequest.processed_by = $1
             WHERE R.processed_at IS NULL
 			GROUP BY r.id
-			HAVING COUNT(shr.id) <= 1`;
+			HAVING COUNT(sameHostRequest.id) <= ${MAX_CONCURRENT_SAME_HOST_REQUESTS - 1}
+			AND COUNT(sameHostSameProcessRequest.id) = 0`;
 
 		// To speed up processing, same-page requests are prioritized as they prevent unnecessary page reloads
 		if (currentUrl) {
-			const urlParamName = "$" + (orderBys.length + 1);
+			const urlParamName = "$" + (data.length + 1);
 			orderBys.push(`CASE WHEN R.url = ${urlParamName} THEN 0 ELSE 1 END ASC`);
 			data.push(currentUrl);
 		}
@@ -131,9 +149,10 @@ class Queue {
 	async markAsProcessing(requestId) {
 		await this.pool.query(`
             UPDATE requests
-            SET processed_at = NOW()
-            WHERE id = $1
-        `, [requestId]);
+            SET processed_at = NOW(),
+            processed_by = $1
+            WHERE id = $2
+        `, [processIdentifier, requestId]);
 	}
 
 	async markAsCompleted(requestId, processingTime) {
