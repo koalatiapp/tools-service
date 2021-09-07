@@ -1,12 +1,23 @@
-steps:
-  - uses: actions/checkout@v2
-    name: Check out code
+name: CI/CD
 
-  - uses: mr-smithers-excellent/docker-build-push@v5
-    name: Build & push Docker image
-    with:
-      image: koalati/tools-service
-      tags: latest
-      registry: docker.io
-      username: ${{ secrets.DOCKER_USERNAME }}
-      password: ${{ secrets.DOCKER_PASSWORD }}
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    docker-push:
+        name: Docker build & push
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+                name: Check out code
+
+            - uses: mr-smithers-excellent/docker-build-push@v5
+                name: Build & push Docker image
+                with:
+                image: koalati/tools-service
+                tags: latest
+                registry: docker.io
+                username: ${{ secrets.DOCKER_USERNAME }}
+                password: ${{ secrets.DOCKER_PASSWORD }}
