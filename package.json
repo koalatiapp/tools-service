@@ -25,7 +25,7 @@
   "homepage": "https://github.com/koalatiapp/tools-service#readme",
   "dependencies": {
     "@koalati/results-validator": "^1.0.4",
-    "@koalati/tool-accessibility": "^1.0.3",
+    "@koalati/tool-accessibility": "^1.0.4",
     "@koalati/tool-console": "^1.0.3",
     "@koalati/tool-loading-speed": "^1.0.2",
     "@koalati/tool-responsive": "^1.1.0",
