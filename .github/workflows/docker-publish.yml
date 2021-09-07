@@ -11,11 +11,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
-                name: Check out code
+              name: Check out code
 
             - uses: mr-smithers-excellent/docker-build-push@v5
-                name: Build & push Docker image
-                with:
+              name: Build & push Docker image
+              with:
                 image: koalati/tools-service
                 tags: latest
                 registry: docker.io
