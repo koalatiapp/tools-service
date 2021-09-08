@@ -1,6 +1,6 @@
 {
   "name": "@koalati/tools-service",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Web service that handles requests for all website testing on Koalati.",
   "scripts": {
     "start": "node src/server.js",
@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/koalatiapp/tools-service#readme",
   "dependencies": {
-    "@koalati/results-validator": "^1.0.4",
+    "@koalati/results-validator": "^1.0.5",
     "@koalati/tool-accessibility": "^1.1.0",
     "@koalati/tool-console": "^1.1.0",
     "@koalati/tool-loading-speed": "^1.1.2",
