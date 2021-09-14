@@ -116,11 +116,12 @@ An `.env` file can be added at the root of the project to define these; simply u
 | PGPASSWORD *                    | String   | Postgres database password                                                                              |
 | PGDATABASE *                    | String   | Postgres database name                                                                                  |
 | PGPORT *                        | Integer  | Postgres database port number                                                                           |
+| PG_DATABASE_CA_CERT             | String   | A base64 encoded CA certificate can be defined in this variable to be used for the postgres connections. |
+| PGSSLROOTCERT                   | String   | If `PG_DATABASE_CA_CERT` is defined, a filepath where the certificate will be stored must be provided in `PGSSLROOTCERT`. |
 | BROWSER_MAX_CONCURRENT_PAGES    | Integer  | Maximum number of pages that can be open at once. (default: `3`)                                        |
 | BROWSER_MAX_CONCURRENT_CONTEXTS | Integer  | Maximum number of browsing contexts that can be open at once. (default: `BROWSER_MAX_CONCURRENT_PAGES`) |
 | MAX_CONCURRENT_SAME_HOST_REQUESTS | Integer  | Maximum number of requests for the same hostname that can be processed at once, shared across however many instances of this service. (default: `10`) |
-| PG_DATABASE_CA_CERT             | String   | A base64 encoded CA certificate can be defined in this variable to be used for the postgres connections. |
-| PGSSLROOTCERT                   | String   | If `PG_DATABASE_CA_CERT` is defined, a filepath where the certificate will be stored must be provided in `PGSSLROOTCERT`. |
+| SENTRY_DSN                      | String   | DSN to track errors and performance with Sentry.io.                                                     |
 
 ℹ️ _The variables followed by an asterisk are optional when running the service in MOCK mode._
 

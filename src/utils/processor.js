@@ -3,6 +3,7 @@ const queue = require("./queue")();
 const browserManager = require("./browserManager")();
 const Notify = require("./notify");
 const validator = new (require("@koalati/results-validator"))();
+const Sentry = require("@sentry/node");
 
 module.exports = class Processor {
 	constructor(processorManager = null) {
@@ -49,6 +50,13 @@ module.exports = class Processor {
 			return;
 		}
 
+		const sentryTransaction = Sentry.startTransaction({
+			op: "request",
+			name: request.tool,
+			data: {
+				request
+			}
+		});
 		this.activeRequest = request;
 
 		// Mark the request as being processed to prevent other processors from processing it
@@ -88,6 +96,8 @@ module.exports = class Processor {
 			const validationErrors = validator.checkResults(toolInstance.results);
 
 			if (validationErrors.length) {
+				sentryTransaction.setTag("failure_reason", "result_format");
+				sentryTransaction.finish();
 				return await this.failRequest("The tool's results were invalid. This error will be reported to the tool's developer automatically.", validationErrors);
 			}
 
@@ -95,6 +105,8 @@ module.exports = class Processor {
 			await toolInstance.cleanup();
 		} catch (error) {
 			if (!jsonResults) {
+				sentryTransaction.setTag("failure_reason", "exception");
+				sentryTransaction.finish();
 				return await this.failRequest("An error has occured while running the tool on your page. This error will be reported to the tool's developer automatically.", error);
 			} else {
 				/*
@@ -105,7 +117,10 @@ module.exports = class Processor {
 			}
 		}
 
-		return await this.completeRequest(jsonResults, Date.now() - processingStartTime);
+		const successResponse = await this.completeRequest(jsonResults, Date.now() - processingStartTime);
+		sentryTransaction.finish();
+
+		return successResponse;
 	}
 
 	async failRequest(errorMessage, errorData = null) {

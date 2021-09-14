@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 
 if (!MOCK_MODE) {
 	const pool = require("./utils/pgPool")();
+	require("./utils/sentry");
 	require("./utils/queue")(pool);
 	require("./utils/processorManager")();
 }
