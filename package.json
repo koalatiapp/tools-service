@@ -38,8 +38,7 @@
     "express-jwt": "^6.0.0",
     "pg": "^8.5.1",
     "puppeteer": "^5.2.1",
-    "qs": "^6.9.4",
-    "querystring": "^0.2.1"
+    "qs": "^6.9.4"
   },
   "devDependencies": {
     "eslint": "^7.19.0",
