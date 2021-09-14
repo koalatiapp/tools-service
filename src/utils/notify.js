@@ -1,4 +1,4 @@
-const http = require("http");
+const { http } = require("follow-redirects");
 const webhookHost = process.env.WEBHOOK_HOST || null;
 const webhookPath = process.env.WEBHOOK_PATH || null;
 
