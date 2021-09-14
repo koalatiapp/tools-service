@@ -30,12 +30,29 @@ module.exports = class Notify {
 		if (webhookHost) {
 			const postQueryString = this._stringifyBody(body);
 			const options = this._prepareOptions(postQueryString);
-			const req = http.request(options);
+			const req = http.request(options, function (res) {
+				// check the returned response code
+				if (("" + res.statusCode).match(/^2\d\d$/)) {
+					// Request handled, happy
+					console.log(`Webhook request received by server: received HTTP ${res.statusCode}`);
+				} else if (("" + res.statusCode).match(/^5\d\d$/)) {
+					// Server error, I have no idea what happend in the backend
+					// but server at least returned correctly (in a HTTP protocol
+					// sense) formatted response
+					console.log(`Webhook request failed on the webhook's side: received HTTP ${res.statusCode}`);
+				}
+			});
 
 			req.on("error", (e) => {
 				console.error(e);
 			});
 
+			req.on("timeout", function () {
+				console.log("Webhook request timed out");
+				req.destroy();
+			});
+
+			req.setTimeout(5000);
 			req.write(postQueryString);
 			req.end();
 		} else {
