@@ -1,32 +1,38 @@
 const { Pool } = require("pg");
-const fs = require("fs");
 
 /**
  * If a root CA certficate is passed via the environment variables,
- * store it locally for usage with PG.
+ * it will be returned by the function for usage in PG connections.
  */
-function storeCertificateToFile()
+function getCACertificateContents()
 {
 	if (!process.env.PG_DATABASE_CA_CERT) {
-		return;
+		return null;
 	}
 
 	const certBuffer = Buffer.from(process.env.PG_DATABASE_CA_CERT, "base64");
-	const certContent = certBuffer.toString();
-	const filename = process.env.PGSSLROOTCERT;
-
-	fs.writeFileSync(filename, certContent);
-
-	console.log(`Stored CA certificate to file in ${filename}`);
+	return certBuffer.toString();
 }
 
 // Export the pool as a singleton
 let poolInstance = null;
 module.exports = () => {
 	if (!poolInstance) {
-		storeCertificateToFile();
+		const sslCAContents = getCACertificateContents();
 
-		poolInstance = new Pool();
+		if (sslCAContents) {
+			console.log("Using CA certificate from PG_DATABASE_CA_CERT environment variable.");
+
+			poolInstance = new Pool({
+				ssl: {
+					rejectUnauthorized: false,
+					ca: sslCAContents,
+				},
+			});
+		} else {
+			poolInstance = new Pool();
+		}
 	}
+
 	return poolInstance;
 };
