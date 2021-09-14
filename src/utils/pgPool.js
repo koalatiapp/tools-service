@@ -17,7 +17,7 @@ function storeCertificateToFile()
 
 	fs.writeFileSync(filename, certContent);
 
-	console.log(`Stored CA certificatet to file in ${filename}`);
+	console.log(`Stored CA certificate to file in ${filename}`);
 }
 
 // Export the pool as a singleton
