@@ -57,6 +57,9 @@ RUN npm ci --only=production
 # Bundle app source
 COPY . .
 
+# Update permissions in the directory
+RUN chown -R node:node .
+
 # Switch to a non-root user
 USER node
 
