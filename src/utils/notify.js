@@ -27,9 +27,9 @@ module.exports = class Notify {
 	}
 
 	static _post(body) {
-		if (webhookHost) {
-			console.log("Sending webhook request...");
+		console.log(`Sending webhook request to ${webhookHost || "[missing host]"}...`);
 
+		if (webhookHost) {
 			const postQueryString = this._stringifyBody(body);
 			const options = this._prepareOptions(postQueryString);
 			const req = http.request(options, function (res) {
