@@ -42,6 +42,8 @@ module.exports = class Notify {
 					// but server at least returned correctly (in a HTTP protocol
 					// sense) formatted response
 					console.log(`Webhook request failed on the webhook's side: received HTTP ${res.statusCode}`);
+				} else {
+					console.log(`Webhook request returned unexpected result: received HTTP ${res.statusCode}`);
 				}
 			});
 
