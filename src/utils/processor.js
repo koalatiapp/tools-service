@@ -54,7 +54,7 @@ module.exports = class Processor {
 		// Mark the request as being processed to prevent other processors from processing it
 		await queue.markAsProcessing(request.id);
 		const processingStartTime = Date.now();
-		console.log(`Request ${request.id} is now being processed...`);
+		console.log(`Request ${request.id} is now being processed... (${request.tool} for ${request.url})`);
 
 		try {
 			/**
@@ -132,7 +132,7 @@ module.exports = class Processor {
 		await queue.markAsCompleted(request.id, processingTime);
 		Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
 
-		console.log(`Request ${request.id} completed successfully (in ${processingTime} ms)\n`);
+		console.log(`Request ${request.id} completed successfully in ${processingTime} ms (${request.tool} for ${request.url})\n`);
 
 		this.processNextRequest();
 	}
