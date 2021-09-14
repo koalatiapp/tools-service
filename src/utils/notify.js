@@ -22,12 +22,14 @@ module.exports = class Notify {
 				"Content-Type": "application/x-www-form-urlencoded",
 				"Content-Length": queryString.length
 			},
-			agent: false
+			agent: false,
 		};
 	}
 
 	static _post(body) {
 		if (webhookHost) {
+			console.log("Sending webhook request...");
+
 			const postQueryString = this._stringifyBody(body);
 			const options = this._prepareOptions(postQueryString);
 			const req = http.request(options, function (res) {
