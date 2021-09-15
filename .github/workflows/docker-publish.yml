@@ -6,7 +6,24 @@ on:
             - master
 
 jobs:
+    tests:
+        name: Coding standards and unit tests
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Use Node.js 14.x
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.x
+            - name: Install JS dependencies (npm install)
+              run: npm ci
+            - name: ESLint (JS)
+              run: npx eslint
+            - name: Run unit tests
+              run: npm test
     docker-push:
+        needs: tests
         name: Docker build & push
         runs-on: ubuntu-latest
         steps:
