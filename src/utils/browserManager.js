@@ -84,13 +84,17 @@ class BrowserManager {
 	}
 
 	initConsoleMessageCollection(page, storageObj) {
-		page.on("pageerror", ({ message }) => storageObj.errors.push(message))
-			.on("requestfailed", request => storageObj.errors.push(`${request.failure().errorText} ${request.url()}`))
-			.on("console", message => {
-				const type = message.type().substr(0, 3).toUpperCase();
-				const key = { ERR: "errors", WAR: "warnings" }[type] || "others";
-				storageObj[key].push(message.text());
-			});
+		page.on("pageerror", ({ message }) => {
+			storageObj.errors.push(message);
+		}).on("requestfailed", request => {
+			if (request.failure()) {
+				storageObj.errors.push(`${request.failure().errorText} ${request.url()}`);
+			}
+		}).on("console", message => {
+			const type = message.type().substr(0, 3).toUpperCase();
+			const key = { ERR: "errors", WAR: "warnings" }[type] || "others";
+			storageObj[key].push(message.text());
+		});
 	}
 
 	async loadUrlWithRetries(page, url, maxPageLoadAttempts = 3, timeoutDuration = 5000) {
