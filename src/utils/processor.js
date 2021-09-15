@@ -11,7 +11,7 @@ module.exports = class Processor {
 
 		this.ready = false;
 		this.page = null;
-		this.browserContext= null;
+		this.browserContext = null;
 		this.previousRequest = null;
 		this.activeRequest = null;
 		this.consoleMessages = browserManager.getConsoleMessageCollectionTemplate();
@@ -19,6 +19,13 @@ module.exports = class Processor {
 
 		browserManager.launchPage().then(({ page, context }) => {
 			instance.init(page, context);
+		}).catch(error => {
+			if (error.message.indexOf("maximum load is reached") != -1) {
+				console.warn("The browser manager has reached max load.");
+				return;
+			}
+
+			throw error;
 		});
 	}
 
