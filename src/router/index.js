@@ -14,6 +14,7 @@ module.exports = (app) => {
 	app.get("/status/up", status.up);
 	app.get("/status/queue", status.queue);
 	app.get("/status/time-estimates", status.timeEstimates);
+	app.get("/status/project", status.project);
 
 	// Tools controller
 	app.post("/tools/request", tools.request);

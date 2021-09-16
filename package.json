@@ -1,6 +1,6 @@
 {
   "name": "@koalati/tools-service",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Web service that handles requests for all website testing on Koalati.",
   "scripts": {
     "start": "node src/server.js",

@@ -39,5 +39,56 @@ module.exports = {
 		}
 
 		res.send(responseBody);
+	},
+
+	/**
+	 * Returns the processing status and progress for a specified URL
+	 */
+	project: async (req, res) => {
+		const responseBody = {
+			success: true,
+			message: "",
+			data: {
+				pending: false,
+				requestCount: null,
+				timeEstimate: null,
+			},
+		};
+
+		if (typeof req.body.url == "undefined") {
+			res.send({
+				success: false,
+				message: "Missing `url` GET parameter."
+			});
+			return;
+		}
+
+		const projectUrl = req.body.url;
+		const pendingRequests = await queue.getRequestsMatchingUrl(projectUrl);
+		responseBody.data.pending = pendingRequests.length > 0;
+		responseBody.data.requestCount = pendingRequests.length;
+
+		// Check if an estimated time can be calculated
+		try {
+			const timesByTool = (await queue.getAverageProcessingTimes()).average;
+			let estimatedTime = 0;
+
+			for (const request of pendingRequests) {
+				let timeLeftForRequest = timesByTool[request.tool].completion_time;
+
+				// substract the time that has already elapsed since the request was created
+				const receivedTimestamp = (new Date(request.received_at)).getTime();
+				const currentTimestamp = (new Date()).getTime();
+				timeLeftForRequest -= currentTimestamp - receivedTimestamp;
+
+				estimatedTime += Math.max(timeLeftForRequest, 1000);
+			}
+
+			responseBody.data.timeEstimate = estimatedTime;
+		} catch (error) {
+			responseBody.message = "The estimated processing time could not be obtained.";
+		}
+
+		res.send(responseBody);
 	}
 };

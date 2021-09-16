@@ -84,6 +84,20 @@ class Queue {
 		return res.rowCount > 0 ? res.rows[0] : null;
 	}
 
+	/**
+	 * @param {string} url Base URL of the project. Every request that start with this URL will be returned.
+	 * @returns {Promise<object[]>}
+	 */
+	async getRequestsMatchingUrl(url) {
+		const res = await this.pool.query(`
+            SELECT *
+            FROM requests
+            WHERE completed_at IS NULL
+            AND url LIKE $1
+        `, [url + "%"]);
+		return res.rowCount > 0 ? res.rows : [];
+	}
+
 	async updateRequestPriority(requestId, newPriority) {
 		await this.pool.query(`
             UPDATE requests
@@ -186,6 +200,7 @@ class Queue {
 		const timesByTool = {
 			lowPriority: {},
 			highPriority: {},
+			average: {},
 		};
 		const lowPriorityResult = await this.pool.query(`
             SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
@@ -200,6 +215,13 @@ class Queue {
             FROM requests
             WHERE completed_at IS NOT NULL
             AND priority > 1
+            GROUP BY tool
+            LIMIT 10000;
+        `);
+		const averageResult = await this.pool.query(`
+            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
+            FROM requests
+            WHERE completed_at IS NOT NULL
             GROUP BY tool
             LIMIT 10000;
         `);
@@ -218,11 +240,21 @@ class Queue {
 			};
 		}
 
+		for (const row of averageResult.rows) {
+			timesByTool.average[row.tool] = {
+				processing_time: row.processing_time,
+				completion_time: row.completion_time
+			};
+		}
+
 		return timesByTool;
 	}
 }
 
 let queueInstance = null;
+/**
+ * @returns {Queue}
+ */
 module.exports = (pool) => {
 	if (!queueInstance) {
 		queueInstance = new Queue(pool);
