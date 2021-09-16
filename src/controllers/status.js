@@ -79,7 +79,8 @@ module.exports = {
 				// substract the time that has already elapsed since the request was created
 				const receivedTimestamp = (new Date(request.received_at)).getTime();
 				const currentTimestamp = (new Date()).getTime();
-				timeLeftForRequest -= currentTimestamp - receivedTimestamp;
+				const timeSinceRequestReceived = currentTimestamp - receivedTimestamp;
+				timeLeftForRequest -= timeSinceRequestReceived;
 
 				estimatedTime += Math.max(timeLeftForRequest, 1000);
 			}
