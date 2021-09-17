@@ -74,7 +74,7 @@ module.exports = {
 			let estimatedTime = 0;
 
 			for (const request of pendingRequests) {
-				let timeLeftForRequest = timesByTool[request.tool].completion_time;
+				let timeLeftForRequest = timesByTool[request.tool].processing_time;
 
 				// substract the time that has already elapsed since the request was created
 				const receivedTimestamp = (new Date(request.received_at)).getTime();
