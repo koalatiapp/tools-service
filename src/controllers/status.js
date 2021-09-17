@@ -75,7 +75,13 @@ module.exports = {
 
 			for (const request of pendingRequests) {
 				const toolEstimates = timesByTool[request.tool] || {};
-				const timeEstimateForRequest = toolEstimates.processing_time || 3000;
+				let timeEstimateForRequest = toolEstimates.processing_time || 3000;
+
+				if (request.processed_at) {
+					const msSinceStart = (new Date()).getTime() - (new Date(request.processed_at)).getTime();
+					timeEstimateForRequest -= msSinceStart;
+				}
+
 				estimatedTime += Math.max(timeEstimateForRequest, 1000);
 			}
 
