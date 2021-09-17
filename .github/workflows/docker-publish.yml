@@ -38,3 +38,14 @@ jobs:
                 registry: docker.io
                 username: ${{ secrets.DOCKER_USERNAME }}
                 password: ${{ secrets.DOCKER_PASSWORD }}
+    deploy:
+        needs: docker-push
+        name: Digital Ocean re-deployment
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+              name: Check out code
+            - name: curl
+              uses: wei/curl@v1
+              with:
+                args: -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.DIGITALOCEAN_DEPLOY_TOKEN }}" "https://api.digitalocean.com/v2/apps/${{ secrets.DIGITALOCEAN_APP_ID }}/deployments"
