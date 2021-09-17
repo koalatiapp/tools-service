@@ -74,15 +74,9 @@ module.exports = {
 			let estimatedTime = 0;
 
 			for (const request of pendingRequests) {
-				let timeLeftForRequest = timesByTool[request.tool].processing_time;
-
-				// substract the time that has already elapsed since the request was created
-				const receivedTimestamp = (new Date(request.received_at)).getTime();
-				const currentTimestamp = (new Date()).getTime();
-				const timeSinceRequestReceived = currentTimestamp - receivedTimestamp;
-				timeLeftForRequest -= timeSinceRequestReceived;
-
-				estimatedTime += Math.max(timeLeftForRequest, 1000);
+				const toolEstimates = timesByTool[request.tool] || {};
+				const timeEstimateForRequest = toolEstimates.processing_time || 3000;
+				estimatedTime += Math.max(timeEstimateForRequest, 1000);
 			}
 
 			responseBody.data.timeEstimate = estimatedTime;
