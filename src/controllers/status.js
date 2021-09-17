@@ -55,7 +55,7 @@ module.exports = {
 			},
 		};
 
-		if (typeof req.body.url == "undefined") {
+		if (typeof req.query.url == "undefined") {
 			res.send({
 				success: false,
 				message: "Missing `url` GET parameter."
