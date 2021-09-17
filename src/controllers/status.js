@@ -63,7 +63,7 @@ module.exports = {
 			return;
 		}
 
-		const projectUrl = req.body.url;
+		const projectUrl = req.query.url;
 		const pendingRequests = await queue.getRequestsMatchingUrl(projectUrl);
 		responseBody.data.pending = pendingRequests.length > 0;
 		responseBody.data.requestCount = pendingRequests.length;
