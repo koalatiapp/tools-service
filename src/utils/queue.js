@@ -115,6 +115,10 @@ class Queue {
 		 *
 		 * It also prevents single instance of the tools service from processing multiple requests to the same host at once, as this
 		 * often affects performance as well (both locally on the browser, and remotely on the website's server due to session locks).
+		 *
+		 * Side note:
+		 * Requests that have been "in progress" for more than 3 minutes are considered not started as they likely have failed.
+		 * These are brought back in the queue automatically in the request below.
          */
 		const baseQuery = `
             SELECT r.*
@@ -123,14 +127,17 @@ class Queue {
 				ON sameHostRequest.hostname = r.hostname
 				AND sameHostRequest.id != r.id
 				AND sameHostRequest.processed_at IS NOT NULL
+				AND sameHostRequest.processed_at >= (CURRENT_DATE - interval '3 minutes')
 				AND sameHostRequest.completed_at IS NULL
 			LEFT JOIN requests sameHostSameProcessRequest
 				ON sameHostSameProcessRequest.hostname = r.hostname
 				AND sameHostSameProcessRequest.id != r.id
 				AND sameHostSameProcessRequest.processed_at IS NOT NULL
+				AND sameHostSameProcessRequest.processed_at >= (CURRENT_DATE - interval '3 minutes')
 				AND sameHostSameProcessRequest.completed_at IS NULL
 				AND sameHostSameProcessRequest.processed_by = $1
             WHERE R.processed_at IS NULL
+			OR (R.completed_at IS NULL AND R.processed_at < (CURRENT_DATE - interval '3 minutes'))
 			GROUP BY r.id
 			HAVING COUNT(sameHostRequest.id) <= ${MAX_CONCURRENT_SAME_HOST_REQUESTS - 1}
 			AND COUNT(sameHostSameProcessRequest.id) = 0`;
