@@ -3,7 +3,6 @@ require("dotenv").config();
 const MOCK_MODE = process.env.MOCK_API == "true";
 const PORT = process.env.PORT || 3000;
 const express = require("express");
-const bodyParser = require("body-parser");
 
 if (!MOCK_MODE) {
 	const pool = require("./utils/pgPool")();
@@ -16,7 +15,7 @@ const app = express();
 const initializeRoutes = require("./router");
 const initializeAuthentication = require("./utils/authentication");
 
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
 // Initialize the app
 initializeAuthentication(app);
