@@ -1,6 +1,6 @@
 {
   "name": "@koalati/tools-service",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Web service that handles requests for all website testing on Koalati.",
   "scripts": {
     "start": "node src/server.js",
@@ -31,7 +31,7 @@
     "@koalati/tool-responsive": "^1.2.2",
     "@koalati/tool-seo": "^1.1.0",
     "@koalati/tool-social": "^1.1.0",
-    "@koalati/tool-spellcheck": "^1.1.0",
+    "@koalati/tool-spellcheck": "^1.1.1",
     "@sentry/node": "^6.12.0",
     "@sentry/tracing": "^6.12.0",
     "body-parser": "^1.19.0",
