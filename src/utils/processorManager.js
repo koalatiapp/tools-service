@@ -7,6 +7,7 @@ class ProcessorManager {
 	constructor() {
 		console.log("Proccessor manager initialized");
 		this.processors = [];
+		this.lookForWorkTimeout = null;
 		this.init().catch((error) => {
 			console.error(error);
 			process.exit(0);
@@ -26,7 +27,11 @@ class ProcessorManager {
 					setTimeout(resolve, 500);
 				});
 			}
+
+			return;
 		}
+
+		this.initLookForWorkTimeout();
 	}
 
 	create() {
@@ -43,11 +48,35 @@ class ProcessorManager {
 
 	kill(processor) {
 		const index = this.processors.indexOf(processor);
+
 		if (index != -1) {
 			this.processors[index].destroy();
 			this.processors.splice(index, 1);
 			console.log(`Killed a processor, ${this.processors.length} left.`);
+
+			this.initLookForWorkTimeout();
 		}
+	}
+
+	/**
+	 * Sets a timeout upon which the processor manager will check
+	 * if any new requests could be processed.
+	 *
+	 * This is done to prevent unused processors when there are multiple
+	 * instances of the service running at the same time under a load
+	 * balancer.
+	 */
+	initLookForWorkTimeout()
+	{
+		if (this.lookForWorkTimeout) {
+			return;
+		}
+
+		this.lookForWorkTimeout = setTimeout(() => {
+			this.checkToHandleNewRequest();
+			clearTimeout(this.lookForWorkTimeout);
+			this.lookForWorkTimeout = null;
+		}, 3000);
 	}
 }
 
