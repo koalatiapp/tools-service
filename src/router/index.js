@@ -1,7 +1,8 @@
+const { MOCK_MODE } = require("../config");
 let status;
 let tools;
 
-if (process.env.MOCK_API == "true") {
+if (MOCK_MODE) {
 	status = require("../controllers/mock/status");
 	tools = require("../controllers/mock/tools");
 } else {

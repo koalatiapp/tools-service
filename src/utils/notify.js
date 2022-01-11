@@ -1,6 +1,5 @@
 const { http } = require("follow-redirects");
-const webhookHost = process.env.WEBHOOK_HOST || null;
-const webhookPath = process.env.WEBHOOK_PATH || null;
+const { WEBHOOK_HOST, WEBHOOK_PATH } = require("../config");
 
 module.exports = class Notify {
 	static _stringifyBody(body)
@@ -15,8 +14,8 @@ module.exports = class Notify {
 	static _prepareOptions(queryString)
 	{
 		return {
-			hostname: webhookHost,
-			path: webhookPath,
+			hostname: WEBHOOK_HOST,
+			path: WEBHOOK_PATH,
 			method: "POST",
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded",
@@ -27,9 +26,9 @@ module.exports = class Notify {
 	}
 
 	static _post(body) {
-		console.log(`Sending webhook request to ${webhookHost || "[missing host]"}...`);
+		console.log(`Sending webhook request to ${WEBHOOK_HOST || "[missing host]"}...`);
 
-		if (webhookHost) {
+		if (WEBHOOK_HOST) {
 			const postQueryString = this._stringifyBody(body);
 			const options = this._prepareOptions(postQueryString);
 			const req = http.request(options, function (res) {

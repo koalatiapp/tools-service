@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const { isValidTool } = require("./tool.js");
+const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const processIdentifier = crypto.randomBytes(20).toString("hex");
-const MAX_CONCURRENT_SAME_HOST_REQUESTS = parseInt(process.env.MAX_CONCURRENT_SAME_HOST_REQUESTS ?? "10");
 
 // Singleton
 class Queue {

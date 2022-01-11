@@ -1,7 +1,6 @@
 const Notify = require("../../src/utils/notify.js");
 const assert = require("assert");
-const webhookPath = process.env.WEBHOOK_PATH || null;
-const webhookHost = process.env.WEBHOOK_HOST || null;
+const { WEBHOOK_HOST, WEBHOOK_PATH } = require("../../src/config");
 
 describe("Notify (src/utils/notify.js)", () => {
 	it("Should build the query string from a JSON object", () => {
@@ -30,8 +29,8 @@ describe("Notify (src/utils/notify.js)", () => {
 	it("Should build POST request options", () => {
 		const queryString = Notify._stringifyBody({ test: "value" });
 		const expectedOptions = {
-			hostname: webhookHost,
-			path: webhookPath,
+			hostname: WEBHOOK_HOST,
+			path: WEBHOOK_PATH,
 			method: "POST",
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded",

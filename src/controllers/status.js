@@ -1,5 +1,5 @@
 const queue = require("../utils/queue")();
-const MAX_CONCURRENT_SAME_HOST_REQUESTS = parseInt(process.env.MAX_CONCURRENT_SAME_HOST_REQUESTS ?? "10");
+const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("./config.js");
 
 module.exports = {
 	up: (req, res) => {
@@ -67,8 +67,14 @@ module.exports = {
 
 		const projectUrl = req.query.url;
 		const pendingRequests = await queue.getRequestsMatchingUrl(projectUrl);
+		const timeByProcessor = [];
+
 		responseBody.data.pending = pendingRequests.length > 0;
 		responseBody.data.requestCount = pendingRequests.length;
+
+		for (let i = 0; i < MAX_CONCURRENT_SAME_HOST_REQUESTS; i++) {
+			timeByProcessor[i] = 0;
+		}
 
 		// Check if an estimated time can be calculated
 		try {

@@ -1,6 +1,5 @@
 const puppeteer = require("puppeteer");
-const maxConcurrentPages = process.env.BROWSER_MAX_CONCURRENT_PAGES || 3;
-const maxConcurrrentContexts = process.env.BROWSER_MAX_CONCURRENT_CONTEXTS || maxConcurrentPages;
+const { BROWSER_MAX_CONCURRENT_PAGES, BROWSER_MAX_CONCURRENT_CONTEXTS } = require("../config");
 
 // Singleton
 class BrowserManager {
@@ -63,7 +62,7 @@ class BrowserManager {
 
 		const contexts = this.browser.browserContexts();
 		// Puppeteer always has one context up and running by default - don't count it.
-		return maxConcurrrentContexts - (contexts.length - 1);
+		return BROWSER_MAX_CONCURRENT_CONTEXTS - (contexts.length - 1);
 	}
 
 	async hasReachedMaxLoad() {
@@ -72,7 +71,7 @@ class BrowserManager {
 		}
 
 		const pages = await this.browser.pages();
-		if (pages.length > maxConcurrentPages) {
+		if (pages.length > BROWSER_MAX_CONCURRENT_PAGES) {
 			return true;
 		}
 
@@ -129,12 +128,12 @@ class BrowserManager {
 
 	getMaxConcurrentPages()
 	{
-		return maxConcurrentPages;
+		return BROWSER_MAX_CONCURRENT_PAGES;
 	}
 
 	getMaxConcurrentContexts()
 	{
-		return maxConcurrrentContexts;
+		return BROWSER_MAX_CONCURRENT_CONTEXTS;
 	}
 }
 

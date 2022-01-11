@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+const { PG_DATABASE_CA_CERT } = require("../config");
 
 /**
  * If a root CA certficate is passed via the environment variables,
@@ -6,11 +7,11 @@ const { Pool } = require("pg");
  */
 function getCACertificateContents()
 {
-	if (!process.env.PG_DATABASE_CA_CERT) {
+	if (!PG_DATABASE_CA_CERT) {
 		return null;
 	}
 
-	const certBuffer = Buffer.from(process.env.PG_DATABASE_CA_CERT, "base64");
+	const certBuffer = Buffer.from(PG_DATABASE_CA_CERT, "base64");
 	return certBuffer.toString();
 }
 

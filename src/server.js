@@ -1,7 +1,6 @@
 require("dotenv").config();
 
-const MOCK_MODE = process.env.MOCK_API == "true";
-const PORT = process.env.PORT || 3000;
+const { MOCK_MODE, PORT } = require("./config");
 const express = require("express");
 
 if (!MOCK_MODE) {

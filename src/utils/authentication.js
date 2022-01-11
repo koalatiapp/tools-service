@@ -1,20 +1,21 @@
 const jwt = require("express-jwt");
+const { JWT_SECRET, AUTH_ACCESS_TOKEN } = require("../config");
 
-if (!process.env.JWT_SECRET) {
+if (!JWT_SECRET) {
 	throw new Error("The JWT_SECRET environment variable must be set to run the tools service.");
 }
 
-if (!process.env.AUTH_ACCESS_TOKEN) {
+if (!AUTH_ACCESS_TOKEN) {
 	throw new Error("The AUTH_ACCESS_TOKEN environment variable must be set to run the tools service.");
 }
 
 module.exports = (app) => {
 	// Use express-jwt to handle the JWT's decoding & validation
-	app.use(jwt({ secret: process.env.JWT_SECRET, algorithms: ["HS256"], requestProperty: "auth" }));
+	app.use(jwt({ secret: JWT_SECRET, algorithms: ["HS256"], requestProperty: "auth" }));
 
 	// Check the access token contained in the JWT.
 	app.use(function (req, res, next) {
-		if (req.auth.access_token != process.env.AUTH_ACCESS_TOKEN) {
+		if (req.auth.access_token != AUTH_ACCESS_TOKEN) {
 			res.status(401).send("Invalid access token.");
 		}
 		next();
