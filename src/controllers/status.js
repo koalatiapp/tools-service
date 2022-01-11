@@ -1,4 +1,5 @@
 const queue = require("../utils/queue")();
+const MAX_CONCURRENT_SAME_HOST_REQUESTS = parseInt(process.env.MAX_CONCURRENT_SAME_HOST_REQUESTS ?? "10");
 
 module.exports = {
 	up: (req, res) => {
@@ -33,6 +34,7 @@ module.exports = {
 		try {
 			const timesByTool = await queue.getAverageProcessingTimes();
 			responseBody.data = timesByTool;
+			responseBody.data.maxConcurrentRequests = MAX_CONCURRENT_SAME_HOST_REQUESTS;
 		} catch (error) {
 			responseBody.success = false;
 			responseBody.message = "The average processing times could not be obtained.";
