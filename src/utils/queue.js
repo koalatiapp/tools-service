@@ -127,17 +127,17 @@ class Queue {
 				ON sameHostRequest.hostname = r.hostname
 				AND sameHostRequest.id != r.id
 				AND sameHostRequest.processed_at IS NOT NULL
-				AND sameHostRequest.processed_at >= (CURRENT_TIMESTAMP - interval '2 minutes')
+				AND sameHostRequest.processed_at >= (now()::timestamp - interval '2 minutes')
 				AND sameHostRequest.completed_at IS NULL
 			LEFT JOIN requests sameHostSameProcessRequest
 				ON sameHostSameProcessRequest.hostname = r.hostname
 				AND sameHostSameProcessRequest.id != r.id
 				AND sameHostSameProcessRequest.processed_at IS NOT NULL
-				AND sameHostSameProcessRequest.processed_at >= (CURRENT_TIMESTAMP - interval '2 minutes')
+				AND sameHostSameProcessRequest.processed_at >= (Cnow()::timestamp - interval '2 minutes')
 				AND sameHostSameProcessRequest.completed_at IS NULL
 				AND sameHostSameProcessRequest.processed_by = $1
             WHERE R.processed_at IS NULL
-			OR (R.completed_at IS NULL AND R.processed_at < (CURRENT_TIMESTAMP - interval '2 minutes'))
+			OR (R.completed_at IS NULL AND R.processed_at < (now()::timestamp - interval '2 minutes')
 			GROUP BY r.id
 			HAVING COUNT(sameHostRequest.id) <= ${MAX_CONCURRENT_SAME_HOST_REQUESTS - 1}
 			AND COUNT(sameHostSameProcessRequest.id) = 0`;
