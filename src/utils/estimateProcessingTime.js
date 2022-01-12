@@ -12,7 +12,7 @@ async function getAverageTimeForTool(tool) {
 		const timesByTool = (await timesByToolPromise).average;
 		const toolEstimates = timesByTool[tool] || {};
 
-		return toolEstimates.processing_time || fallbackTime;
+		return parseInt(toolEstimates.processing_time || fallbackTime);
 	} catch (err) {
 		return fallbackTime;
 	}
@@ -38,7 +38,14 @@ module.exports = async function estimateProcessingTime(requests, processingCapac
 		let lowestIndex = 0;
 		let lowestTime = null;
 
-		// @TODO: Deduct already elapsed time
+		// Deduct already elapsed time
+		if (request.processed_at) {
+			const msSinceStart = (new Date()).getTime() - (new Date(request.processed_at)).getTime();
+
+			if (msSinceStart >= 0) {
+				time -= msSinceStart;
+			}
+		}
 
 		for (let processorIndex = 0; processorIndex < maxNbOfProcessors; processorIndex++) {
 			if (lowestTime === null || (timeByProcessor[processorIndex] ?? 0) < lowestTime) {
