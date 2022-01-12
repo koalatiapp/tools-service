@@ -72,10 +72,7 @@ class ProcessorManager {
 			return;
 		}
 
-		console.log("Initializing 'look for work' timeout.");
-
 		this.lookForWorkTimeout = setTimeout(() => {
-			console.log("Looking for work...");
 			this.checkToHandleNewRequest();
 
 			clearTimeout(this.lookForWorkTimeout);
