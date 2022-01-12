@@ -31,7 +31,7 @@ async function getAverageTimeForTool(tool) {
  */
 module.exports = async function estimateProcessingTime(requests, processingCapacityPercentage = 0.5) {
 	const timeByProcessor = {};
-	const maxNbOfProcessors = Math.floor(MAX_CONCURRENT_SAME_HOST_REQUESTS * processingCapacityPercentage);
+	const maxNbOfProcessors = Math.max(1, Math.floor(MAX_CONCURRENT_SAME_HOST_REQUESTS * processingCapacityPercentage));
 
 	for (const request of requests) {
 		let time = await getAverageTimeForTool(request.tool);
@@ -54,5 +54,5 @@ module.exports = async function estimateProcessingTime(requests, processingCapac
 		timeByProcessor[lowestIndex] = (timeByProcessor[lowestIndex] ?? 0) + time;
 	}
 
-	return Math.max(Object.values(timeByProcessor));
+	return Math.max(...Object.values(timeByProcessor));
 };
