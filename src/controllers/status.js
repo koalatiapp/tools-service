@@ -1,5 +1,6 @@
 const queue = require("../utils/queue")();
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("./config.js");
+const estimateProcessingTime = require("../utils/estimateProcessingTime");
 
 module.exports = {
 	up: (req, res) => {
@@ -67,36 +68,10 @@ module.exports = {
 
 		const projectUrl = req.query.url;
 		const pendingRequests = await queue.getRequestsMatchingUrl(projectUrl);
-		const timeByProcessor = [];
 
 		responseBody.data.pending = pendingRequests.length > 0;
 		responseBody.data.requestCount = pendingRequests.length;
-
-		for (let i = 0; i < MAX_CONCURRENT_SAME_HOST_REQUESTS; i++) {
-			timeByProcessor[i] = 0;
-		}
-
-		// Check if an estimated time can be calculated
-		try {
-			const timesByTool = (await queue.getAverageProcessingTimes()).average;
-			let estimatedTime = 0;
-
-			for (const request of pendingRequests) {
-				const toolEstimates = timesByTool[request.tool] || {};
-				let timeEstimateForRequest = toolEstimates.processing_time || 3000;
-
-				if (request.processed_at) {
-					const msSinceStart = (new Date()).getTime() - (new Date(request.processed_at)).getTime();
-					timeEstimateForRequest -= msSinceStart;
-				}
-
-				estimatedTime += Math.max(timeEstimateForRequest, 1000);
-			}
-
-			responseBody.data.timeEstimate = estimatedTime;
-		} catch (error) {
-			responseBody.message = "The estimated processing time could not be obtained.";
-		}
+		responseBody.data.timeEstimate = await estimateProcessingTime(pendingRequests);
 
 		res.send(responseBody);
 	}
