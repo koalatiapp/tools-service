@@ -38,14 +38,7 @@ module.exports = async function estimateProcessingTime(requests, processingCapac
 		let lowestIndex = 0;
 		let lowestTime = null;
 
-		// Deduct already elapsed time
-		if (request.processed_at) {
-			const msSinceStart = (new Date()).getTime() - (new Date(request.processed_at)).getTime();
-
-			if (msSinceStart >= 0) {
-				time -= msSinceStart;
-			}
-		}
+		// @TODO: Deduct already elapsed time
 
 		for (let processorIndex = 0; processorIndex < maxNbOfProcessors; processorIndex++) {
 			if (lowestTime === null || (timeByProcessor[processorIndex] ?? 0) < lowestTime) {
