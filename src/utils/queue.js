@@ -133,7 +133,7 @@ class Queue {
 				ON sameHostSameProcessRequest.hostname = r.hostname
 				AND sameHostSameProcessRequest.id != r.id
 				AND sameHostSameProcessRequest.processed_at IS NOT NULL
-				AND sameHostSameProcessRequest.processed_at >= (Cnow()::timestamp - interval '2 minutes')
+				AND sameHostSameProcessRequest.processed_at >= (now()::timestamp - interval '2 minutes')
 				AND sameHostSameProcessRequest.completed_at IS NULL
 				AND sameHostSameProcessRequest.processed_by = $1
             WHERE R.processed_at IS NULL
