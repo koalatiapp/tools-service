@@ -4,6 +4,10 @@ FROM node:${NODE_VERSION} as express_node
 
 ENV NODE_ENV=${NODE_ENV}
 
+# Set timezone
+ENV TZ=America/New_York
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Create app directory
 WORKDIR /app
 
