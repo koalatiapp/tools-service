@@ -1,5 +1,5 @@
 const queue = require("../utils/queue")();
-const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("./config.js");
+const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const estimateProcessingTime = require("../utils/estimateProcessingTime");
 
 module.exports = {
