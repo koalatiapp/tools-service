@@ -15,16 +15,30 @@ class BrowserManager {
 		}
 
 		const managerInstance = this;
-
-		this.browserLaunchingPromise = puppeteer.launch({
+		const launchOptions = {
 			args: [
 				"--disable-web-security",
 				"--no-sandbox"
 			],
-			headless: true
-		});
+			headless: true,
+		};
 
-		this.browser = await this.browserLaunchingPromise;
+		try {
+			this.browserLaunchingPromise = puppeteer.launch(launchOptions);
+			this.browser = await this.browserLaunchingPromise;
+		} catch (error) {
+			// Fallback for ARM machines where the bundled Chromium installation fails
+			console.warn("Chromium failed to launch with bundled binary.");
+			console.warn("Attempting to launch with the `apt` version instead.");
+
+			launchOptions.executablePath = "/usr/bin/chromium";
+
+			this.browserLaunchingPromise = puppeteer.launch(launchOptions);
+			this.browser = await this.browserLaunchingPromise;
+
+			console.log("Chromium launch successful!");
+		}
+
 		this.browser.on("disconnected", () => {
 			managerInstance.browser = null;
 		});
