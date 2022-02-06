@@ -30,17 +30,17 @@ jobs:
             - uses: actions/checkout@v2
               name: Check out code
             - name: Install buildx
-                id: buildx
-                uses: crazy-max/ghaction-docker-buildx@v1
-                with:
-                version: latest
+              id: buildx
+              uses: crazy-max/ghaction-docker-buildx@v1
+              with:
+              version: latest
             - name: Login to docker hub
-                run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+              run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             - name: Build the image
-                run: |
-                    docker buildx build \
-                    --tag koalati/tools-service:latest \
-                    --platform linux/amd64,linux/arm/v7,linux/arm64/v8 .
+              run: |
+                docker buildx build \
+                --tag koalati/tools-service:latest \
+                --platform linux/amd64,linux/arm/v7,linux/arm64/v8 .
     deploy:
         needs: docker-push
         name: Digital Ocean re-deployment
