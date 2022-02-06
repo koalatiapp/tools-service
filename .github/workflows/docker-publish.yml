@@ -38,7 +38,7 @@ jobs:
               run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             - name: Build the image
               run: |
-                docker buildx build \
+                docker buildx build --push \
                 --tag koalati/tools-service:latest \
                 --platform linux/amd64,linux/arm/v7,linux/arm64/v8 .
     deploy:
