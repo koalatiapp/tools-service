@@ -10,4 +10,7 @@ module.exports = {
 	WEBHOOK_HOST: process.env.WEBHOOK_HOST || null,
 	WEBHOOK_PATH: process.env.WEBHOOK_PATH || null,
 	SENTRY_DSN: process.env.SENTRY_DSN || null,
+	PAGELOAD_MAX_ATTEMPTS: parseInt(process.env.PAGELOAD_MAX_ATTEMPTS ?? "3"),
+	PAGELOAD_TIMEOUT: parseInt(process.env.PAGELOAD_TIMEOUT ?? "5000"),
+	PAGELOAD_GRACE_PERIOD: parseInt(process.env.PAGELOAD_GRACE_PERIOD ?? "10000"),
 };

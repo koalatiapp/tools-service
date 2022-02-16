@@ -1,5 +1,12 @@
 const puppeteer = require("puppeteer");
-const { BROWSER_MAX_CONCURRENT_PAGES, BROWSER_MAX_CONCURRENT_CONTEXTS } = require("../config");
+const sleep = require("./sleep");
+const {
+	BROWSER_MAX_CONCURRENT_PAGES,
+	BROWSER_MAX_CONCURRENT_CONTEXTS,
+	PAGELOAD_MAX_ATTEMPTS,
+	PAGELOAD_TIMEOUT,
+	PAGELOAD_GRACE_PERIOD,
+} = require("../config");
 
 // Singleton
 class BrowserManager {
@@ -110,8 +117,26 @@ class BrowserManager {
 		});
 	}
 
-	async loadUrlWithRetries(page, url, maxPageLoadAttempts = 3, timeoutDuration = 5000) {
+	/**
+	 * Loads the page at the provided URL, retrying in case of timeouts.
+	 *
+	 * A grace period is used between a failed attempt and a new attempt in order
+	 * to allow smaller web servers to process the existing requests and reduce
+	 * the chances that our request times out.
+	 *
+	 * @param {puppeteer.Page} page Instance of a Puppeteer page in which to load the URL
+	 * @param {string} url URL of the page to load
+	 * @param {int} maxPageLoadAttempts Maximum number of attempts (default: `5`)
+	 * @param {int} timeoutDuration Initial timeout duration in milliseconds (default: `5000`)
+	 * @param {int} gracePeriod Duration before a new attempt is made after a failed attempt,
+	 * 							in milliseconds (default: `10000`)
+	 */
+	async loadUrlWithRetries(page, url, maxPageLoadAttempts, timeoutDuration, gracePeriod) {
 		let response = null;
+
+		maxPageLoadAttempts = maxPageLoadAttempts ?? PAGELOAD_MAX_ATTEMPTS;
+		timeoutDuration = timeoutDuration ?? PAGELOAD_TIMEOUT;
+		gracePeriod = gracePeriod ?? PAGELOAD_GRACE_PERIOD;
 
 		for (let attemptCount = 1; attemptCount <= maxPageLoadAttempts; attemptCount++) {
 			try {
@@ -119,13 +144,15 @@ class BrowserManager {
 				break;
 			} catch (error) {
 				if (attemptCount == maxPageLoadAttempts) {
-					throw new Error(`The page at the following URL could not be loaded within ${maxPageLoadAttempts} attempts (${Math.round((timeoutDuration * maxPageLoadAttempts) / 1000)} seconds wait time): ${url}`);
+					throw new Error(`The following page timed out and could not be loaded: ${url}`);
 				}
+
+				await sleep(gracePeriod);
 			}
 		}
 
-		if (response.status().toString().substr(0, 1) != "2") {
-			throw new Error(`The page at the following URL returned an error ${response.status()}: ${url}`);
+		if (response.status().toString().substring(0, 1) != "2") {
+			throw new Error(`The following page returned an error ${response.status()}: ${url}`);
 		}
 	}
 
