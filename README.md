@@ -20,17 +20,18 @@ When a new request comes in, it is analyzed and inserted into a processing queue
 
 Requests have a basic `priority` level: the lower the number, the lower the priority.
 By default, all requests are assigned a priority level of 1, unless a different priority is provided.
-This basic priority system is how free _vs_ premium requests are handled: premium requests have a priority level of 2, and are therefore processed before free requests.
 
-However, the `priority` level is not the only factor in the processing order algorithm. Every _nth_ premium request processed, a free request is processed (**:warning: this has not yet been implemented**).
-This ensures that free users still get reasonable loading times, even if premium users are prioritized. The _nth_ number is defined by an environment variable ([see the Environment variables section](#environment-variables)).
-
-Another factor that is taken into account is server load for the websites that being tested. To prevent overloading others servers,
-no more than 2 requests of the same website will be processed at the same time.
+Server load for the websites that being tested is also taken into account. To prevent overloading others servers,
+no more than X requests of the same website will be processed at the same time. This limit is defined by the 
+`MAX_CONCURRENT_SAME_HOST_REQUESTS` environment variable ([see the Environment variables section](#environment-variables)).
+Server load is also taken into account by allowing a grace period after a page load fails in order to let the
+non-responding server recuperate if it needs to.
 
 Finally, there is one last factor at play in the queue's processing order. If a request has just been completed by a `Processor`,
 that request's URL is provided to the `Queue.next()` method, and the Queue will prioritize other requests on the same page before all others.
-This is to optimize the overall processing time of the web service, as it reduces the total number of page loads that need to be done.
+This is to optimize the overall processing time of the web service, as some tools can run without having to reload the page, therefore 
+reducing the total number of page loads required to test a site. Fewer page loads mean faster testing and fewer resources used on both sides,
+so this is a win-win for everyone involved.
 
 ### The `Processor` and `ProcessorManager`
 

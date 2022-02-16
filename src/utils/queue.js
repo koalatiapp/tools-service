@@ -149,14 +149,7 @@ class Queue {
 			data.push(currentUrl);
 		}
 
-		/**
-         * @TODO: implement the queue's priority algorithm for premium/regular users.
-         * Higher priority requests should be prioritized (processed first).
-         * However, every N high-priority (2+) requests, X low-priority (1) request should be treated.
-         * The N and X number for the algorithm should be environment variables, so it can be changed easily without issuing new commits.
-         */
 		orderBys.push("priority DESC");
-
 		orderBys.push("received_at ASC");
 
 		// Build and run the actual query
