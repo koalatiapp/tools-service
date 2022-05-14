@@ -19,6 +19,10 @@ class Queue {
 		}
 
 		// Handle requests for multiple tools by calling the add method individually for every requested tool
+		if (typeof tool == "object" && !Array.isArray(tool)) {
+			tool = Object.values(url);
+		}
+
 		if (Array.isArray(tool)) {
 			for (const singleTool of tool) {
 				await this.add({
@@ -31,6 +35,10 @@ class Queue {
 		}
 
 		// Handle requests for multiple URLs by calling the add method individually for every requested URL
+		if (typeof url == "object" && !Array.isArray(url)) {
+			url = Object.values(url);
+		}
+
 		if (Array.isArray(url)) {
 			for (const singleUrl of url) {
 				await this.add({
