@@ -136,7 +136,7 @@ module.exports = class Processor {
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		await queue.markAsCompleted(request.id, null);
+		await queue.markAsCompleted(request, null);
 		Notify.requestError(request, errorMessage);
 		Notify.developerError(request, errorMessage, errorData);
 
@@ -151,7 +151,7 @@ module.exports = class Processor {
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		await queue.markAsCompleted(request.id, processingTime);
+		await queue.markAsCompleted(request, processingTime);
 		Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
 
 		console.log(`Request ${request.id} completed successfully in ${processingTime} ms (${request.tool} for ${request.url})\n`);

@@ -176,13 +176,15 @@ class Queue {
         `, [processIdentifier, requestId]);
 	}
 
-	async markAsCompleted(requestId, processingTime) {
+	async markAsCompleted(request, processingTime) {
 		return await this.pool.query(`
             UPDATE requests
             SET completed_at = NOW(),
             processing_time = $1
-            WHERE id = $2
-        `, [processingTime, requestId]);
+            WHERE url = $2
+			AND tool = $3
+			AND completed_at IS NULL
+        `, [processingTime, request.url, request.tool]);
 	}
 
 	async pendingCount() {
