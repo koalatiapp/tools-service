@@ -120,7 +120,7 @@ module.exports = class Processor {
                  * If the results are present, it means the error occured during the tool's cleanup() method.
                  * This isn't worth throwing an error to the end-user, but the developer should be notified.
                  */
-				Notify.developerError(request, error.message, error);
+				await Notify.developerError(request, error.message, error);
 			}
 		}
 
@@ -137,8 +137,10 @@ module.exports = class Processor {
 		this.activeRequest = null;
 
 		await queue.markAsCompleted(request, null);
-		Notify.requestError(request, errorMessage);
-		Notify.developerError(request, errorMessage, errorData);
+		await Promise.all([
+			Notify.requestError(request, errorMessage),
+			Notify.developerError(request, errorMessage, errorData),
+		]);
 
 		console.error(`Request ${request.id} failed: ${errorMessage} : ${JSON.stringify(errorData)}\n`);
 
@@ -152,7 +154,7 @@ module.exports = class Processor {
 		this.activeRequest = null;
 
 		await queue.markAsCompleted(request, processingTime);
-		Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
+		await Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
 
 		console.log(`Request ${request.id} completed successfully in ${processingTime} ms (${request.tool} for ${request.url})\n`);
 
