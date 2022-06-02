@@ -1,5 +1,6 @@
 const { http } = require("follow-redirects");
 const { WEBHOOK_HOST, WEBHOOK_PATH } = require("../config");
+const sleep = require("./sleep");
 
 module.exports = class Notify {
 	static _stringifyBody(body)
@@ -28,21 +29,44 @@ module.exports = class Notify {
 	static _post(body) {
 		console.log(`Sending webhook request to ${WEBHOOK_HOST || "[missing host]"}...`);
 
-		if (WEBHOOK_HOST) {
-			const postQueryString = this._stringifyBody(body);
-			const options = this._prepareOptions(postQueryString);
+		if (!WEBHOOK_HOST) {
+			throw new Error("You must define the WEBHOOK_HOST and WEBHOOK_PATH environment variable.");
+		}
+
+		const postQueryString = this._stringifyBody(body);
+		const options = this._prepareOptions(postQueryString);
+		let attemptNumber = 1;
+
+		const sendPostRequest = function (resolve) {
 			const req = http.request(options, function (res) {
 				// check the returned response code
 				if (("" + res.statusCode).match(/^2\d\d$/)) {
 					// Request handled, happy
 					console.log(`Webhook request received by server: received HTTP ${res.statusCode}`);
+					resolve();
 				} else if (("" + res.statusCode).match(/^5\d\d$/)) {
 					// Server error, I have no idea what happend in the backend
 					// but server at least returned correctly (in a HTTP protocol
 					// sense) formatted response
 					console.log(`Webhook request failed on the webhook's side: received HTTP ${res.statusCode}`);
+
+					if (attemptNumber <= 6) {
+						const delay = 5000 * attemptNumber;
+
+						// Let's give the other server some breathing room in case it's busy, and try again later
+						console.log(`Waiting ${delay}ms before trying again...`);
+						sleep(delay).then(() => {
+							attemptNumber += 1;
+							sendPostRequest(resolve);
+						});
+					} else {
+						// The server had its chance, let's just forget about that request.
+						// @TODO: Implement a queue of pending notifications with a standalone service to send/process them
+						resolve();
+					}
 				} else {
 					console.log(`Webhook request returned unexpected result: received HTTP ${res.statusCode}`);
+					resolve();
 				}
 			});
 
@@ -58,12 +82,12 @@ module.exports = class Notify {
 			req.setTimeout(5000);
 			req.write(postQueryString);
 			req.end();
-		} else {
-			throw new Error("You must define the WEBHOOK_HOST and WEBHOOK_PATH environment variable.");
-		}
+		};
+
+		return new Promise(sendPostRequest);
 	}
 
-	static requestSuccess(request, results, processingTime) {
+	static async requestSuccess(request, results, processingTime) {
 		return Notify._post({
 			request: request,
 			results: results,
@@ -73,7 +97,7 @@ module.exports = class Notify {
 		});
 	}
 
-	static requestError(request, message) {
+	static async requestError(request, message) {
 		return Notify._post({
 			request: request,
 			error: message,
@@ -82,7 +106,7 @@ module.exports = class Notify {
 		});
 	}
 
-	static developerError(request, message, errorData = null) {
+	static async developerError(request, message, errorData = null) {
 		return Notify._post({
 			request: request,
 			message: message,
