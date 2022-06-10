@@ -1,5 +1,7 @@
 const { PG_DATABASE_CA_CERT } = require("../config");
-const config = {};
+const config = {
+	query_timeout: 10000,
+};
 
 if (PG_DATABASE_CA_CERT) {
 	const certBuffer = Buffer.from(PG_DATABASE_CA_CERT, "base64");
