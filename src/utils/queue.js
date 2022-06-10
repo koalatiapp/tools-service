@@ -172,7 +172,7 @@ class Queue {
 	async markAsProcessing(requestId) {
 		return await this.pgClient.query(`
             UPDATE requests
-            SET processed_at = NOW(),
+            SET processed_at = now()::timestamp,
             processed_by = $1
             WHERE id = $2
         `, [processIdentifier, requestId]);
@@ -181,7 +181,7 @@ class Queue {
 	async markAsCompleted(request, processingTime) {
 		return await this.pgClient.query(`
             UPDATE requests
-            SET completed_at = NOW(),
+            SET completed_at = now()::timestamp,
             processing_time = $1
             WHERE url = $2
 			AND tool = $3
