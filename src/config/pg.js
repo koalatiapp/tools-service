@@ -1,7 +1,6 @@
 const { PG_DATABASE_CA_CERT } = require("../config");
-const poolConfig = {
-	statement_timeout: 10000,
-	idle_in_transaction_session_timeout: 30000,
+const config = {
+	query_timeout: 10000,
 };
 
 if (PG_DATABASE_CA_CERT) {
@@ -9,10 +8,10 @@ if (PG_DATABASE_CA_CERT) {
 
 	console.log("Using CA certificate from PG_DATABASE_CA_CERT environment variable.");
 
-	poolConfig.ssl = {
+	config.ssl = {
 		rejectUnauthorized: false,
 		ca: certBuffer.toString(),
 	};
 }
 
-module.exports = poolConfig;
+module.exports = config;
