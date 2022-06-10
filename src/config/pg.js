@@ -1,6 +1,6 @@
 const { PG_DATABASE_CA_CERT } = require("../config");
 const config = {
-	query_timeout: 10000,
+	query_timeout: 20000,
 };
 
 if (PG_DATABASE_CA_CERT) {
