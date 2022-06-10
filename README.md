@@ -119,6 +119,7 @@ An `.env` file can be added at the root of the project to define these; simply u
 | PGDATABASE *                    | String   | Postgres database name                                                                                  |
 | PGPORT *                        | Integer  | Postgres database port number                                                                           |
 | PG_DATABASE_CA_CERT             | String   | A base64 encoded CA certificate can be defined in this variable to be used for the postgres connections. |
+| PGSSLROOTCERT                   | String   | If `PG_DATABASE_CA_CERT` is defined, a filepath where the certificate will be stored must be provided in `PGSSLROOTCERT`. |
 | PAGELOAD_MAX_ATTEMPTS           | Integer  | Maximum number of attempts to retry loading a page. (default: `3`)         					           |
 | PAGELOAD_TIMEOUT                | Integer  | Timeout duration for page loads, in milliseconds. (default: `5000`)         					           |
 | PAGELOAD_GRACE_PERIOD           | Integer  | Duration of the grace period between two page load attempt, in milliseconds. (default: `10000`)         |
