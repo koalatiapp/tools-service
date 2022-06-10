@@ -1,5 +1,4 @@
 const puppeteer = require("puppeteer");
-const queue = require("./queue")();
 const browserManager = require("./browserManager")();
 const Notify = require("./notify");
 const validator = new (require("@koalati/results-validator"))();
@@ -9,6 +8,7 @@ module.exports = class Processor {
 	constructor(processorManager = null) {
 		const instance = this;
 
+		this.queue = require("./queue")();
 		this.ready = false;
 		this.page = null;
 		this.browserContext = null;
@@ -51,7 +51,7 @@ module.exports = class Processor {
          * If none is pending, destroy the processor.
          * Another one will be created when it is needed.
          */
-		const request = await queue.next(this.previousRequest ? this.previousRequest.url : null);
+		const request = await this.queue.next(this.previousRequest ? this.previousRequest.url : null);
 		if (!request) {
 			this.selfDestroy();
 			return;
@@ -67,7 +67,7 @@ module.exports = class Processor {
 		this.activeRequest = request;
 
 		// Mark the request as being processed to prevent other processors from processing it
-		await queue.markAsProcessing(request.id);
+		await this.queue.markAsProcessing(request.id);
 		const processingStartTime = Date.now();
 		console.log(`Request ${request.id} is now being processed... (${request.tool} for ${request.url})`);
 
@@ -136,7 +136,7 @@ module.exports = class Processor {
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		await queue.markAsCompleted(request, null);
+		await this.queue.markAsCompleted(request, null);
 		await Promise.all([
 			Notify.requestError(request, errorMessage),
 			Notify.developerError(request, errorMessage, errorData),
@@ -153,7 +153,7 @@ module.exports = class Processor {
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		await queue.markAsCompleted(request, processingTime);
+		await this.queue.markAsCompleted(request, processingTime);
 		await Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
 
 		console.log(`Request ${request.id} completed successfully in ${processingTime} ms (${request.tool} for ${request.url})\n`);
@@ -168,6 +168,8 @@ module.exports = class Processor {
 	}
 
 	destroy() {
+		this.queue.disconnect();
+
 		if (this.browserContext) {
 			this.browserContext.close();
 		}

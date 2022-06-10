@@ -1,16 +1,18 @@
 const crypto = require("crypto");
 const { isValidTool } = require("./tool.js");
+const createPgClient = require("./pgClient.js");
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const processIdentifier = crypto.randomBytes(20).toString("hex");
 
-// Singleton
 class Queue {
-	constructor(pool) {
-		if (typeof pool != "object") {
-			throw new Error(`The Queue constructor expects a Postgres Pool object, but received ${typeof pool}`);
-		}
+	constructor()
+	{
+		this.pgClient = createPgClient();
+	}
 
-		this.pool = pool;
+	async disconnect()
+	{
+		await this.pgClient.end();
 	}
 
 	async add({ url, tool, priority }) {
@@ -76,13 +78,13 @@ class Queue {
 		const hostname = (new URL(url)).hostname;
 
 		// Insert the request in the database
-		await this.pool.query(`
-            INSERT INTO requests (url, hostname, tool, priority) VALUES ($1, $2, $3, $4)
-        `, [url, hostname, tool, priority]);
+		await this.pgClient.query(`
+			INSERT INTO requests (url, hostname, tool, priority) VALUES ($1, $2, $3, $4)
+		`, [url, hostname, tool, priority]);
 	}
 
 	async getUnprocessedMatchingRequest(url, tool) {
-		const res = await this.pool.query(`
+		const res = await this.pgClient.query(`
             SELECT *
             FROM requests
             WHERE completed_at IS NULL
@@ -97,7 +99,7 @@ class Queue {
 	 * @returns {Promise<object[]>}
 	 */
 	async getRequestsMatchingUrl(url) {
-		const res = await this.pool.query(`
+		const res = await this.pgClient.query(`
             SELECT *
             FROM requests
             WHERE completed_at IS NULL
@@ -107,11 +109,11 @@ class Queue {
 	}
 
 	async updateRequestPriority(requestId, newPriority) {
-		await this.pool.query(`
-            UPDATE requests
-            SET priority = $1
-            WHERE id = $2
-        `, [newPriority, requestId]);
+		await this.pgClient.query(`
+			UPDATE requests
+			SET priority = $1
+			WHERE id = $2
+		`, [newPriority, requestId]);
 	}
 
 	async next(currentUrl = null) {
@@ -162,13 +164,13 @@ class Queue {
 
 		// Build and run the actual query
 		const query = baseQuery + (orderBys ? (" ORDER BY " + orderBys.join(", ")) : "");
-		const result = await this.pool.query(query, data);
+		const result = await this.pgClient.query(query, data);
 
 		return result.rowCount ? result.rows[0] : null;
 	}
 
 	async markAsProcessing(requestId) {
-		return await this.pool.query(`
+		return await this.pgClient.query(`
             UPDATE requests
             SET processed_at = NOW(),
             processed_by = $1
@@ -177,7 +179,7 @@ class Queue {
 	}
 
 	async markAsCompleted(request, processingTime) {
-		return await this.pool.query(`
+		return await this.pgClient.query(`
             UPDATE requests
             SET completed_at = NOW(),
             processing_time = $1
@@ -188,7 +190,7 @@ class Queue {
 	}
 
 	async pendingCount() {
-		const res = await this.pool.query(`
+		const res = await this.pgClient.query(`
             SELECT COUNT(*) AS "count"
             FROM requests
             WHERE processed_at IS NOT NULL
@@ -198,7 +200,7 @@ class Queue {
 	}
 
 	async nonAssignedCount() {
-		const res = await this.pool.query(`
+		const res = await this.pgClient.query(`
             SELECT COUNT(*) AS "count"
             FROM requests
             WHERE processed_at IS NULL
@@ -212,7 +214,7 @@ class Queue {
 			highPriority: {},
 			average: {},
 		};
-		const lowPriorityResult = await this.pool.query(`
+		const lowPriorityResult = await this.pgClient.query(`
             SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
             FROM requests
             WHERE completed_at IS NOT NULL
@@ -220,7 +222,7 @@ class Queue {
             GROUP BY tool
             LIMIT 10000;
         `);
-		const highPriorityResult = await this.pool.query(`
+		const highPriorityResult = await this.pgClient.query(`
             SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
             FROM requests
             WHERE completed_at IS NOT NULL
@@ -228,7 +230,7 @@ class Queue {
             GROUP BY tool
             LIMIT 10000;
         `);
-		const averageResult = await this.pool.query(`
+		const averageResult = await this.pgClient.query(`
             SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
             FROM requests
             WHERE completed_at IS NOT NULL
@@ -261,13 +263,4 @@ class Queue {
 	}
 }
 
-let queueInstance = null;
-/**
- * @returns {Queue}
- */
-module.exports = (pool) => {
-	if (!queueInstance) {
-		queueInstance = new Queue(pool);
-	}
-	return queueInstance;
-};
+module.exports = () => new Queue();

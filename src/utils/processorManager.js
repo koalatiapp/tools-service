@@ -1,5 +1,4 @@
 const Processor = require("./processor");
-const queue = require("./queue")();
 const browserManager = require("./browserManager")();
 
 // Singleton
@@ -15,8 +14,11 @@ class ProcessorManager {
 	}
 
 	async init() {
+		const queue = require("./queue")();
 		const requestCount = await queue.nonAssignedCount();
 		const browserContextSpots = await browserManager.availableContextSpots();
+
+		await queue.disconnect();
 
 		if (requestCount > 0 && browserContextSpots > 0) {
 			const newProcessorsCount = Math.min(requestCount, browserContextSpots);

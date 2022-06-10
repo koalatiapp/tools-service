@@ -1,8 +1,8 @@
-const queue = require("../utils/queue")();
 const processorManager = require("../utils/processorManager")();
 
 module.exports = {
 	request: async (req, res) => {
+		const queue = require("../utils/queue")();
 		const responseBody = {
 			success: true,
 			message: "",
@@ -11,6 +11,7 @@ module.exports = {
 		try {
 			// Add the request to the queue
 			await queue.add(req.body);
+			await queue.disconnect();
 
 			// Poke the processor manager, in case it was inactive.
 			processorManager.checkToHandleNewRequest();

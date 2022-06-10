@@ -4,9 +4,7 @@ const { MOCK_MODE, PORT } = require("./config");
 const express = require("express");
 
 if (!MOCK_MODE) {
-	const pool = require("./utils/pgPool")();
 	require("./utils/sentry");
-	require("./utils/queue")(pool);
 	require("./utils/processorManager")();
 }
 

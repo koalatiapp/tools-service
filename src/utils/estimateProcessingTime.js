@@ -2,8 +2,14 @@ const queue = require("./queue")();
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 let timesByToolPromise = queue.getAverageProcessingTimes();
 
+timesByToolPromise.then(() => queue.disconnect());
+
 // Refresh the times by tool every now and then
-setInterval(() => { timesByToolPromise = queue.getAverageProcessingTimes(); }, 30000);
+setInterval(() => {
+	const queue = require("./queue")();
+	timesByToolPromise = queue.getAverageProcessingTimes();
+	timesByToolPromise.then(() => queue.disconnect());
+}, 30000);
 
 async function getAverageTimeForTool(tool) {
 	const fallbackTime = 3000;

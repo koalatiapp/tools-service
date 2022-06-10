@@ -1,4 +1,3 @@
-const queue = require("../utils/queue")();
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const estimateProcessingTime = require("../utils/estimateProcessingTime");
 
@@ -13,6 +12,7 @@ module.exports = {
 	},
 
 	queue: async (req, res) => {
+		const queue = require("../utils/queue")();
 		const responseBody = {
 			success: true,
 			message: "",
@@ -22,10 +22,13 @@ module.exports = {
 			},
 		};
 
+		await queue.disconnect();
+
 		res.send(responseBody);
 	},
 
 	timeEstimates: async (req, res) => {
+		const queue = require("../utils/queue")();
 		const responseBody = {
 			success: true,
 			message: "",
@@ -41,6 +44,8 @@ module.exports = {
 			responseBody.message = "The average processing times could not be obtained.";
 		}
 
+		await queue.disconnect();
+
 		res.send(responseBody);
 	},
 
@@ -48,6 +53,7 @@ module.exports = {
 	 * Returns the processing status and progress for a specified URL
 	 */
 	project: async (req, res) => {
+		const queue = require("../utils/queue")();
 		const responseBody = {
 			success: true,
 			message: "",
@@ -68,6 +74,7 @@ module.exports = {
 
 		const projectUrl = req.query.url;
 		const pendingRequests = await queue.getRequestsMatchingUrl(projectUrl);
+		await queue.disconnect();
 
 		responseBody.data.pending = pendingRequests.length > 0;
 		responseBody.data.requestCount = pendingRequests.length;
