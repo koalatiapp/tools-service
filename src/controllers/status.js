@@ -5,16 +5,16 @@ const createPgClient = require("../utils/pgClient.js");
 module.exports = {
 	up: async (req, res) => {
 		let databaseWorks = false;
+		const pgClient = await createPgClient();
 
 		try {
-			const pgClient = createPgClient();
 			const res = await pgClient.query("SELECT COUNT(*) FROM requests");
 
 			databaseWorks = res.rowCount == 1;
-
-			await pgClient.end();
 		} catch (error) {
 			console.error(error);
+		} finally {
+			await pgClient.end();
 		}
 
 		const responseBody = {

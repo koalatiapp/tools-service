@@ -7,11 +7,19 @@ const processIdentifier = crypto.randomBytes(20).toString("hex");
 class Queue {
 	constructor()
 	{
-		this.pgClient = createPgClient();
+		this.pgClient = null;
+		this._pgClientPromise = createPgClient()
+			.then(client => this.pgClient = client);
+	}
+
+	async _waitForPgConnection()
+	{
+		await this._pgClientPromise;
 	}
 
 	async disconnect()
 	{
+		await this._waitForPgConnection();
 		await this.pgClient.end();
 	}
 
@@ -78,12 +86,15 @@ class Queue {
 		const hostname = (new URL(url)).hostname;
 
 		// Insert the request in the database
+		await this._waitForPgConnection();
 		await this.pgClient.query(`
 			INSERT INTO requests (url, hostname, tool, priority) VALUES ($1, $2, $3, $4)
 		`, [url, hostname, tool, priority]);
 	}
 
 	async getUnprocessedMatchingRequest(url, tool) {
+		await this._waitForPgConnection();
+
 		const res = await this.pgClient.query(`
             SELECT *
             FROM requests
@@ -99,16 +110,20 @@ class Queue {
 	 * @returns {Promise<object[]>}
 	 */
 	async getRequestsMatchingUrl(url) {
+		await this._waitForPgConnection();
+
 		const res = await this.pgClient.query(`
             SELECT *
             FROM requests
             WHERE completed_at IS NULL
             AND url LIKE $1
         `, [url + "%"]);
+
 		return res.rowCount > 0 ? res.rows : [];
 	}
 
 	async updateRequestPriority(requestId, newPriority) {
+		await this._waitForPgConnection();
 		await this.pgClient.query(`
 			UPDATE requests
 			SET priority = $1
@@ -163,6 +178,7 @@ class Queue {
 		orderBys.push("received_at ASC");
 
 		// Build and run the actual query
+		await this._waitForPgConnection();
 		const query = baseQuery + (orderBys ? (" ORDER BY " + orderBys.join(", ")) : "");
 		const result = await this.pgClient.query(query, data);
 
@@ -170,6 +186,7 @@ class Queue {
 	}
 
 	async markAsProcessing(requestId) {
+		await this._waitForPgConnection();
 		return await this.pgClient.query(`
             UPDATE requests
             SET processed_at = now()::timestamp,
@@ -179,6 +196,7 @@ class Queue {
 	}
 
 	async markAsCompleted(request, processingTime) {
+		await this._waitForPgConnection();
 		return await this.pgClient.query(`
             UPDATE requests
             SET completed_at = now()::timestamp,
@@ -190,6 +208,7 @@ class Queue {
 	}
 
 	async pendingCount() {
+		await this._waitForPgConnection();
 		const res = await this.pgClient.query(`
             SELECT COUNT(*) AS "count"
             FROM requests
@@ -200,6 +219,7 @@ class Queue {
 	}
 
 	async nonAssignedCount() {
+		await this._waitForPgConnection();
 		const res = await this.pgClient.query(`
             SELECT COUNT(*) AS "count"
             FROM requests
@@ -209,6 +229,8 @@ class Queue {
 	}
 
 	async getAverageProcessingTimes() {
+		await this._waitForPgConnection();
+
 		const timesByTool = {
 			lowPriority: {},
 			highPriority: {},

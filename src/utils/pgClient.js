@@ -3,20 +3,20 @@ const config = require("../config/pg.js");
 let clientCount = 1;
 let openCount = 0;
 
-module.exports = () => {
+module.exports = async () => {
 	const clientId = clientCount;
 	clientCount += 1;
 
 	const client = new Client(config);
 
-	client.connect(err => {
-		if (err) {
-			console.error(`postgres connection error (${clientId})`, err.stack);
-		} else {
-			openCount++;
-			console.log(`established postgres connection ${clientId} (${openCount} open connections)`);
-		}
-	});
+	try {
+		await client.connect();
+		openCount++;
+
+		console.log(`established postgres connection ${clientId} (${openCount} open connections)`);
+	} catch (err) {
+		console.error(`postgres connection error (${clientId})`, err);
+	}
 
 	client.on("error", err => console.error("postgres error:", err.stack));
 	client.on("notice", msg => console.warn("postgres notice:", msg));
