@@ -16,6 +16,7 @@ module.exports = async () => {
 		console.log(`established postgres connection ${clientId} (${openCount} open connections)`);
 	} catch (err) {
 		console.error(`postgres connection error (${clientId})`, err);
+		throw err;
 	}
 
 	client.on("error", err => console.error("postgres error:", err.stack));
