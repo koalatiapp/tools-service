@@ -23,7 +23,9 @@ class Queue {
 		await this.pgClient.end();
 	}
 
-	async add({ url, tool, priority }) {
+	async add(payload) {
+		let { url, tool, priority } = payload;
+
 		if (!priority) {
 			priority = 1;
 		}
@@ -61,7 +63,7 @@ class Queue {
 		}
 
 		if (!url || !tool || typeof url != "string" || typeof tool != "string") {
-			throw new Error(`Invalid request: missing url and/or tool parameter: ${JSON.stringify({ url, tool, priority })}.`);
+			throw new Error(`Invalid request: testing request payload is missing url and/or tool parameter: ${JSON.stringify(payload)}.`);
 		}
 
 		if (!isValidTool(tool)) {
