@@ -3,12 +3,12 @@ const browserManager = require("./browserManager")();
 const Notify = require("./notify");
 const validator = new (require("@koalati/results-validator"))();
 const Sentry = require("@sentry/node");
+const Queue = require("../utils/queue");
 
 module.exports = class Processor {
 	constructor(processorManager = null) {
 		const instance = this;
 
-		this.queue = require("./queue")();
 		this.ready = false;
 		this.page = null;
 		this.browserContext = null;
@@ -51,8 +51,11 @@ module.exports = class Processor {
          * If none is pending, destroy the processor.
          * Another one will be created when it is needed.
          */
-		const request = await this.queue.next(this.previousRequest ? this.previousRequest.url : null);
+		const queue = new Queue();
+		const request = await queue.next(this.previousRequest ? this.previousRequest.url : null);
+
 		if (!request) {
+			await queue.disconnect();
 			this.selfDestroy();
 			return;
 		}
@@ -67,7 +70,8 @@ module.exports = class Processor {
 		this.activeRequest = request;
 
 		// Mark the request as being processed to prevent other processors from processing it
-		await this.queue.markAsProcessing(request.id);
+		await queue.markAsProcessing(request.id);
+		await queue.disconnect();
 		const processingStartTime = Date.now();
 		console.log(`Request ${request.id} is now being processed... (${request.tool} for ${request.url})`);
 
@@ -131,15 +135,17 @@ module.exports = class Processor {
 	}
 
 	async failRequest(errorMessage, errorData = null) {
+		const queue = new Queue();
 		const request = Object.assign({}, this.activeRequest);
 
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		await this.queue.markAsCompleted(request, null);
+		await queue.markAsCompleted(request, null);
 		await Promise.all([
 			Notify.requestError(request, errorMessage),
 			Notify.developerError(request, errorMessage, errorData),
+			queue.disconnect(),
 		]);
 
 		console.error(`Request ${request.id} failed: ${errorMessage} : ${JSON.stringify(errorData)}\n`);
@@ -148,13 +154,17 @@ module.exports = class Processor {
 	}
 
 	async completeRequest(jsonResults, processingTime) {
+		const queue = new Queue();
 		const request = Object.assign({}, this.activeRequest);
 
 		this.previousRequest = request;
 		this.activeRequest = null;
 
-		await this.queue.markAsCompleted(request, processingTime);
-		await Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime);
+		await queue.markAsCompleted(request, processingTime);
+		await Promise.all([
+			Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime),
+			queue.disconnect(),
+		]);
 
 		console.log(`Request ${request.id} completed successfully in ${processingTime} ms (${request.tool} for ${request.url})\n`);
 
@@ -168,8 +178,6 @@ module.exports = class Processor {
 	}
 
 	destroy() {
-		this.queue.disconnect();
-
 		if (this.browserContext) {
 			this.browserContext.close();
 		}

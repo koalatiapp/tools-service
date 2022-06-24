@@ -1,6 +1,7 @@
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const estimateProcessingTime = require("../utils/estimateProcessingTime");
 const createPgClient = require("../utils/pgClient.js");
+const Queue = require("../utils/queue");
 
 module.exports = {
 	up: async (req, res) => {
@@ -27,7 +28,7 @@ module.exports = {
 	},
 
 	queue: async (req, res) => {
-		const queue = require("../utils/queue")();
+		const queue = new Queue();
 		const responseBody = {
 			success: true,
 			message: "",
@@ -43,7 +44,7 @@ module.exports = {
 	},
 
 	timeEstimates: async (req, res) => {
-		const queue = require("../utils/queue")();
+		const queue = new Queue();
 		const responseBody = {
 			success: true,
 			message: "",
@@ -68,7 +69,7 @@ module.exports = {
 	 * Returns the processing status and progress for a specified URL
 	 */
 	project: async (req, res) => {
-		const queue = require("../utils/queue")();
+		const queue = new Queue();
 		const responseBody = {
 			success: true,
 			message: "",

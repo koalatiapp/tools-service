@@ -1,5 +1,6 @@
 const Processor = require("./processor");
 const browserManager = require("./browserManager")();
+const Queue = require("../utils/queue");
 
 // Singleton
 class ProcessorManager {
@@ -14,7 +15,7 @@ class ProcessorManager {
 	}
 
 	async init() {
-		const queue = require("./queue")();
+		const queue = new Queue();
 		const requestCount = await queue.nonAssignedCount();
 		const browserContextSpots = await browserManager.availableContextSpots();
 

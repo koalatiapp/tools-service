@@ -1,4 +1,5 @@
-const queue = require("./queue")();
+const Queue = require("../utils/queue");
+const queue = new Queue();
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 let timesByToolPromise = queue.getAverageProcessingTimes();
 
@@ -6,7 +7,7 @@ timesByToolPromise.then(() => queue.disconnect());
 
 // Refresh the times by tool every now and then
 setInterval(() => {
-	const queue = require("./queue")();
+	const queue = new Queue();
 	timesByToolPromise = queue.getAverageProcessingTimes();
 	timesByToolPromise.then(() => queue.disconnect());
 }, 30000);

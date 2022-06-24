@@ -1,8 +1,9 @@
 const processorManager = require("../utils/processorManager")();
+const Queue = require("../utils/queue");
 
 module.exports = {
 	request: async (req, res) => {
-		const queue = require("../utils/queue")();
+		const queue = new Queue();
 		const responseBody = {
 			success: true,
 			message: "",

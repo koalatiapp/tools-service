@@ -4,7 +4,7 @@ const createPgClient = require("./pgClient.js");
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const processIdentifier = crypto.randomBytes(20).toString("hex");
 
-class Queue {
+module.exports = class Queue {
 	constructor()
 	{
 		this.pgClient = null;
@@ -285,6 +285,4 @@ class Queue {
 
 		return timesByTool;
 	}
-}
-
-module.exports = () => new Queue();
+};
