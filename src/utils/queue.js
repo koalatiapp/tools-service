@@ -163,8 +163,11 @@ module.exports = class Queue {
 				AND sameHostSameProcessRequest.processed_at >= (now()::timestamp - interval '2 minutes')
 				AND sameHostSameProcessRequest.completed_at IS NULL
 				AND sameHostSameProcessRequest.processed_by = $1
-            WHERE R.processed_at IS NULL
-			OR (R.completed_at IS NULL AND R.processed_at < (now()::timestamp - interval '2 minutes'))
+            WHERE R.completed_at IS NULL
+			AND (
+				R.processed_at IS NULL
+				OR (R.completed_at IS NULL AND R.processed_at < (now()::timestamp - interval '2 minutes'))
+			)
 			GROUP BY r.id
 			HAVING COUNT(sameHostRequest.id) <= ${MAX_CONCURRENT_SAME_HOST_REQUESTS - 1}
 			AND COUNT(sameHostSameProcessRequest.id) = 0`;
