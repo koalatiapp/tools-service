@@ -32,7 +32,7 @@ module.exports = class Queue {
 
 		// Handle requests for multiple tools by calling the add method individually for every requested tool
 		if (typeof tool == "object" && !Array.isArray(tool)) {
-			tool = Object.values(url);
+			tool = Object.values(tool);
 		}
 
 		if (Array.isArray(tool)) {
