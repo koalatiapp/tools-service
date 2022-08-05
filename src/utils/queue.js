@@ -24,6 +24,7 @@ module.exports = class Queue {
 	}
 
 	async add(payload) {
+		const maxPages = 500;
 		let { url, tool, priority } = payload;
 
 		if (!priority) {
@@ -35,6 +36,18 @@ module.exports = class Queue {
 			tool = Object.values(tool);
 		}
 
+		// Handle requests for multiple URLs by calling the add method individually for every requested URL
+		if (typeof url == "object" && !Array.isArray(url)) {
+			url = Object.values(url);
+		}
+
+		// Limit the number of pages sent for testing in one request
+		if (Array.isArray(url) && url.length > maxPages) {
+			url = url
+				.sort((a, b) => a.length > b.length ? 1 : -1) // Relevant pages often have shorter URLs
+				.slice(0, maxPages); // Limit number of pages to scan
+		}
+
 		if (Array.isArray(tool)) {
 			for (const singleTool of tool) {
 				await this.add({
@@ -44,11 +57,6 @@ module.exports = class Queue {
 				});
 			}
 			return;
-		}
-
-		// Handle requests for multiple URLs by calling the add method individually for every requested URL
-		if (typeof url == "object" && !Array.isArray(url)) {
-			url = Object.values(url);
 		}
 
 		if (Array.isArray(url)) {
