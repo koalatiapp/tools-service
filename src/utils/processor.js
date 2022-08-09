@@ -99,6 +99,7 @@ module.exports = class Processor {
 		};
 
 		// Run the tool
+		let rawData = null;
 		let jsonResults = null;
 		try {
 			const toolClass = require(request.tool);
@@ -113,6 +114,8 @@ module.exports = class Processor {
 			}
 
 			jsonResults = JSON.stringify(toolInstance.results);
+			rawData = JSON.stringify(toolInstance?.rawData || null);
+
 			await toolInstance.cleanup();
 		} catch (error) {
 			if (!jsonResults) {
@@ -128,7 +131,7 @@ module.exports = class Processor {
 			}
 		}
 
-		const successResponse = await this.completeRequest(jsonResults, Date.now() - processingStartTime);
+		const successResponse = await this.completeRequest(jsonResults, rawData, Date.now() - processingStartTime);
 		sentryTransaction.finish();
 
 		return successResponse;
@@ -153,7 +156,7 @@ module.exports = class Processor {
 		this.processNextRequest();
 	}
 
-	async completeRequest(jsonResults, processingTime) {
+	async completeRequest(jsonResults, rawData, processingTime) {
 		const queue = new Queue();
 		const request = Object.assign({}, this.activeRequest);
 
@@ -162,7 +165,7 @@ module.exports = class Processor {
 
 		await queue.markAsCompleted(request, processingTime);
 		await Promise.all([
-			Notify.requestSuccess(request, JSON.parse(jsonResults), processingTime),
+			Notify.requestSuccess(request, JSON.parse(jsonResults), JSON.parse(rawData), processingTime),
 			queue.disconnect(),
 		]);
 

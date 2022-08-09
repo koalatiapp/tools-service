@@ -98,10 +98,11 @@ module.exports = class Notify {
 	/**
 	 * @returns {Promise}
 	 */
-	static requestSuccess(request, results, processingTime) {
+	static requestSuccess(request, results, rawData, processingTime) {
 		return Notify._post({
 			request: request,
 			results: results,
+			rawData: rawData,
 			processingTime: processingTime,
 			success: true,
 			type: "toolSuccess",
