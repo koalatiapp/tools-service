@@ -39,7 +39,7 @@
     "express-jwt": "^6.0.0",
     "follow-redirects": "^1.14.4",
     "pg": "^8.7.3",
-    "puppeteer": "^13.0.1",
+    "puppeteer": "^16.1.0",
     "qs": "^6.9.4"
   },
   "devDependencies": {
