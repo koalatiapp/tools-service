@@ -9,6 +9,17 @@ jobs:
     tests:
         name: Coding standards and unit tests
         runs-on: ubuntu-latest
+        services:
+            mysql:
+                image: mysql:8
+                env:
+                    MYSQL_USER: ${DATABASE_USER}
+                    MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+                    MYSQL_DATABASE: ${DATABASE_NAME}
+                    MYSQL_ROOT_PASSWORD: rootpassword
+                ports:
+                    - 3306:3306
+                options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
         steps:
             - name: Checkout
               uses: actions/checkout@v2
