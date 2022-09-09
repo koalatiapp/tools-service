@@ -108,8 +108,8 @@ module.exports = class Processor {
 			const validationErrors = validator.checkResults(toolInstance.results);
 
 			if (validationErrors.length) {
-				sentryTransaction.setTag("failure_reason", "result_format");
-				sentryTransaction.finish();
+				sentryTransaction?.setTag("failure_reason", "result_format");
+				sentryTransaction?.finish();
 				return await this.failRequest("The tool's results were invalid. This error will be reported to the tool's developer automatically.", validationErrors);
 			}
 
@@ -119,8 +119,8 @@ module.exports = class Processor {
 			await toolInstance.cleanup();
 		} catch (error) {
 			if (!jsonResults) {
-				sentryTransaction.setTag("failure_reason", "exception");
-				sentryTransaction.finish();
+				sentryTransaction?.setTag("failure_reason", "exception");
+				sentryTransaction?.finish();
 				return await this.failRequest("An error has occured while running the tool on your page. This error will be reported to the tool's developer automatically.", error);
 			} else {
 				/*
@@ -132,7 +132,7 @@ module.exports = class Processor {
 		}
 
 		const successResponse = await this.completeRequest(jsonResults, rawData, Date.now() - processingStartTime);
-		sentryTransaction.finish();
+		sentryTransaction?.finish();
 
 		return successResponse;
 	}
