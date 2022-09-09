@@ -1,26 +1,26 @@
 const crypto = require("crypto");
 const { isValidTool } = require("./tool.js");
-const createPgClient = require("./pgClient.js");
+const createDatabaseClient = require("./database.js");
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const processIdentifier = crypto.randomBytes(20).toString("hex");
 
 module.exports = class Queue {
 	constructor()
 	{
-		this.pgClient = null;
-		this._pgClientPromise = createPgClient()
-			.then(client => this.pgClient = client);
+		this.database = null;
+		this._databasePromise = createDatabaseClient()
+			.then(client => this.database = client);
 	}
 
-	async _waitForPgConnection()
+	async _waitForDatabaseConnection()
 	{
-		await this._pgClientPromise;
+		await this._databasePromise;
 	}
 
 	async disconnect()
 	{
-		await this._waitForPgConnection();
-		await this.pgClient.end();
+		await this._waitForDatabaseConnection();
+		await this.database.end();
 	}
 
 	async add(payload) {
@@ -88,23 +88,23 @@ module.exports = class Queue {
 		const hostname = (new URL(url)).hostname;
 
 		// Insert the request in the database
-		await this._waitForPgConnection();
-		await this.pgClient.query(`
-			INSERT INTO requests (url, hostname, tool, priority) VALUES ($1, $2, $3, $4)
+		await this._waitForDatabaseConnection();
+		await this.database.query(`
+			INSERT INTO requests (url, hostname, tool, priority) VALUES (?, ?, ?, ?)
 		`, [url, hostname, tool, priority]);
 	}
 
 	async getUnprocessedMatchingRequest(url, tool) {
-		await this._waitForPgConnection();
+		await this._waitForDatabaseConnection();
 
-		const res = await this.pgClient.query(`
+		const [rows] = await this.database.query(`
             SELECT *
             FROM requests
             WHERE completed_at IS NULL
-            AND url = $1
-            AND tool = $2
+            AND url = ?
+            AND tool = ?
         `, [url, tool]);
-		return res.rowCount > 0 ? res.rows[0] : null;
+		return rows.length > 0 ? rows[0] : null;
 	}
 
 	/**
@@ -112,24 +112,24 @@ module.exports = class Queue {
 	 * @returns {Promise<object[]>}
 	 */
 	async getRequestsMatchingUrl(url) {
-		await this._waitForPgConnection();
+		await this._waitForDatabaseConnection();
 
-		const res = await this.pgClient.query(`
+		const [rows] = await this.database.query(`
             SELECT *
             FROM requests
             WHERE completed_at IS NULL
-            AND url LIKE $1
+            AND url LIKE ?
         `, [url + "%"]);
 
-		return res.rowCount > 0 ? res.rows : [];
+		return rows.length > 0 ? rows : [];
 	}
 
 	async updateRequestPriority(requestId, newPriority) {
-		await this._waitForPgConnection();
-		await this.pgClient.query(`
+		await this._waitForDatabaseConnection();
+		await this.database.query(`
 			UPDATE requests
-			SET priority = $1
-			WHERE id = $2
+			SET priority = ?
+			WHERE id = ?
 		`, [newPriority, requestId]);
 	}
 
@@ -154,19 +154,19 @@ module.exports = class Queue {
 				ON sameHostRequest.hostname = r.hostname
 				AND sameHostRequest.id != r.id
 				AND sameHostRequest.processed_at IS NOT NULL
-				AND sameHostRequest.processed_at >= (now()::timestamp - interval '2 minutes')
+				AND sameHostRequest.processed_at >= (NOW() - interval 2 minute)
 				AND sameHostRequest.completed_at IS NULL
 			LEFT JOIN requests sameHostSameProcessRequest
 				ON sameHostSameProcessRequest.hostname = r.hostname
 				AND sameHostSameProcessRequest.id != r.id
 				AND sameHostSameProcessRequest.processed_at IS NOT NULL
-				AND sameHostSameProcessRequest.processed_at >= (now()::timestamp - interval '2 minutes')
+				AND sameHostSameProcessRequest.processed_at >= (NOW() - interval 2 minute)
 				AND sameHostSameProcessRequest.completed_at IS NULL
-				AND sameHostSameProcessRequest.processed_by = $1
-            WHERE R.completed_at IS NULL
+				AND sameHostSameProcessRequest.processed_by = ?
+            WHERE r.completed_at IS NULL
 			AND (
-				R.processed_at IS NULL
-				OR (R.completed_at IS NULL AND R.processed_at < (now()::timestamp - interval '2 minutes'))
+				r.processed_at IS NULL
+				OR (r.completed_at IS NULL AND r.processed_at < (NOW() - interval 2 minute))
 			)
 			GROUP BY r.id
 			HAVING COUNT(sameHostRequest.id) <= ${MAX_CONCURRENT_SAME_HOST_REQUESTS - 1}
@@ -174,8 +174,7 @@ module.exports = class Queue {
 
 		// To speed up processing, same-page requests are prioritized as they prevent unnecessary page reloads
 		if (currentUrl) {
-			const urlParamName = "$" + (data.length + 1);
-			orderBys.push(`CASE WHEN R.url = ${urlParamName} THEN 0 ELSE 1 END ASC`);
+			orderBys.push("CASE WHEN r.url = ? THEN 0 ELSE 1 END ASC");
 			data.push(currentUrl);
 		}
 
@@ -183,103 +182,103 @@ module.exports = class Queue {
 		orderBys.push("received_at ASC");
 
 		// Build and run the actual query
-		await this._waitForPgConnection();
+		await this._waitForDatabaseConnection();
 		const query = baseQuery + (orderBys ? (" ORDER BY " + orderBys.join(", ")) : "");
-		const result = await this.pgClient.query(query, data);
+		const [rows] = await this.database.query(query, data);
 
-		return result.rowCount ? result.rows[0] : null;
+		return rows.length ? rows[0] : null;
 	}
 
 	async markAsProcessing(requestId) {
-		await this._waitForPgConnection();
-		return await this.pgClient.query(`
+		await this._waitForDatabaseConnection();
+		return await this.database.query(`
             UPDATE requests
-            SET processed_at = now()::timestamp,
-            processed_by = $1
-            WHERE id = $2
+            SET processed_at = NOW(),
+            processed_by = ?
+            WHERE id = ?
         `, [processIdentifier, requestId]);
 	}
 
 	async markAsCompleted(request, processingTime) {
-		await this._waitForPgConnection();
-		return await this.pgClient.query(`
+		await this._waitForDatabaseConnection();
+		return await this.database.query(`
             UPDATE requests
-            SET completed_at = now()::timestamp,
-            processing_time = $1
-            WHERE url = $2
-			AND tool = $3
+            SET completed_at = NOW(),
+            processing_time = ?
+            WHERE url = ?
+			AND tool = ?
 			AND completed_at IS NULL
         `, [processingTime, request.url, request.tool]);
 	}
 
 	async pendingCount() {
-		await this._waitForPgConnection();
-		const res = await this.pgClient.query(`
+		await this._waitForDatabaseConnection();
+		const [rows] = await this.database.query(`
             SELECT COUNT(*) AS "count"
             FROM requests
             WHERE processed_at IS NOT NULL
             AND completed_at IS NULL
         `);
-		return res.rows[0].count;
+		return rows.count;
 	}
 
 	async nonAssignedCount() {
-		await this._waitForPgConnection();
-		const res = await this.pgClient.query(`
+		await this._waitForDatabaseConnection();
+		const [rows] = await this.database.query(`
             SELECT COUNT(*) AS "count"
             FROM requests
             WHERE processed_at IS NULL
         `);
-		return res.rows[0].count;
+		return rows[0].count;
 	}
 
 	async getAverageProcessingTimes() {
-		await this._waitForPgConnection();
+		await this._waitForDatabaseConnection();
 
 		const timesByTool = {
 			lowPriority: {},
 			highPriority: {},
 			average: {},
 		};
-		const lowPriorityResult = await this.pgClient.query(`
-            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
+		const [lowPriorityRows] = await this.database.query(`
+            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(TIMESTAMPDIFF(SECOND, completed_at, received_at))) AS completion_time
             FROM requests
             WHERE completed_at IS NOT NULL
             AND priority = 1
             GROUP BY tool
             LIMIT 10000;
         `);
-		const highPriorityResult = await this.pgClient.query(`
-            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
+		const [highPriorityRows] = await this.database.query(`
+            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(TIMESTAMPDIFF(SECOND, completed_at, received_at))) AS completion_time
             FROM requests
             WHERE completed_at IS NOT NULL
             AND priority > 1
             GROUP BY tool
             LIMIT 10000;
         `);
-		const averageResult = await this.pgClient.query(`
-            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(EXTRACT(EPOCH FROM (completed_at - received_at))) * 1000) AS completion_time
+		const [averageRows] = await this.database.query(`
+            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(TIMESTAMPDIFF(SECOND, completed_at, received_at))) AS completion_time
             FROM requests
             WHERE completed_at IS NOT NULL
             GROUP BY tool
             LIMIT 10000;
         `);
 
-		for (const row of lowPriorityResult.rows) {
+		for (const row of lowPriorityRows) {
 			timesByTool.lowPriority[row.tool] = {
 				processing_time: row.processing_time,
 				completion_time: row.completion_time
 			};
 		}
 
-		for (const row of highPriorityResult.rows) {
+		for (const row of highPriorityRows) {
 			timesByTool.highPriority[row.tool] = {
 				processing_time: row.processing_time,
 				completion_time: row.completion_time
 			};
 		}
 
-		for (const row of averageResult.rows) {
+		for (const row of averageRows) {
 			timesByTool.average[row.tool] = {
 				processing_time: row.processing_time,
 				completion_time: row.completion_time

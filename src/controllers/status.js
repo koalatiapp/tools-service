@@ -1,21 +1,21 @@
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
 const estimateProcessingTime = require("../utils/estimateProcessingTime");
-const createPgClient = require("../utils/pgClient.js");
+const createDatabaseClient = require("../utils/database.js");
 const Queue = require("../utils/queue");
 
 module.exports = {
 	up: async (req, res) => {
 		let databaseWorks = false;
-		const pgClient = await createPgClient();
+		const database = await createDatabaseClient();
 
 		try {
-			const res = await pgClient.query("SELECT COUNT(*) FROM requests");
+			const [rows] = await database.query("SELECT COUNT(*) FROM requests");
 
-			databaseWorks = res.rowCount == 1;
+			databaseWorks = rows.length == 1;
 		} catch (error) {
 			console.error(error);
 		} finally {
-			await pgClient.end();
+			await database.end();
 		}
 
 		const responseBody = {

@@ -6,7 +6,7 @@ services:
       context: .
       target: express_node
       args:
-        NODE_VERSION: ${NODE_VERSION:-14}
+        NODE_VERSION: ${NODE_VERSION:-18}
     environment:
       PORT: 3000
     restart: unless-stopped

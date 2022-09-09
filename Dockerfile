@@ -1,5 +1,5 @@
 # "node" stage
-ARG NODE_VERSION=14
+ARG NODE_VERSION=18
 FROM node:${NODE_VERSION} as express_node
 
 ENV NODE_ENV=${NODE_ENV}
@@ -12,7 +12,7 @@ RUN apt-get update && \
 	apt-get install -y \
 	ca-certificates \
 	fonts-liberation \
-	libappindicator3-1 \
+	libayatana-appindicator3-1 \
 	libasound2 \
 	libatk-bridge2.0-0 \
 	libatk1.0-0 \
