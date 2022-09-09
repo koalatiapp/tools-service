@@ -137,7 +137,7 @@ module.exports = class Queue {
 
 		// First check with a simple query if there's any requests to process at all
 		await this._waitForDatabaseConnection();
-		const [rowCount] = await this.database.query(`
+		const [countRows] = await this.database.query(`
 			SELECT COUNT(r.id) as \`count\`
 			FROM requests r
 			WHERE r.completed_at IS NULL
@@ -147,7 +147,7 @@ module.exports = class Queue {
 			)
 		`);
 
-		if (!rowCount.count) {
+		if (!countRows[0].count) {
 			return null;
 		}
 
