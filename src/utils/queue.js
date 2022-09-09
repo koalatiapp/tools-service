@@ -134,6 +134,23 @@ module.exports = class Queue {
 	}
 
 	async next(currentUrl = null) {
+
+		// First check with a simple query if there's any requests to process at all
+		await this._waitForDatabaseConnection();
+		const [rowCount] = await this.database.query(`
+			SELECT COUNT(r.id) as \`count\`
+			FROM requests r
+			WHERE r.completed_at IS NULL
+			AND (
+				r.processed_at IS NULL
+				OR (r.completed_at IS NULL AND r.processed_at < (NOW() - interval 2 minute))
+			)
+		`);
+
+		if (!rowCount.count) {
+			return null;
+		}
+
 		const data = [processIdentifier];
 		const orderBys = [];
 		/**
