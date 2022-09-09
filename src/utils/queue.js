@@ -1,8 +1,7 @@
-const crypto = require("crypto");
 const { isValidTool } = require("./tool.js");
 const createDatabaseClient = require("./database.js");
 const { MAX_CONCURRENT_SAME_HOST_REQUESTS } = require("../config");
-const processIdentifier = crypto.randomBytes(20).toString("hex");
+const processIdentifier = require("./processIdentifier.js");
 
 module.exports = class Queue {
 	constructor()
@@ -134,76 +133,104 @@ module.exports = class Queue {
 	}
 
 	async next(currentUrl = null) {
-
-		// First check with a simple query if there's any requests to process at all
+		// Build and run the actual query
 		await this._waitForDatabaseConnection();
-		const [countRows] = await this.database.query(`
-			SELECT COUNT(r.id) as \`count\`
+		const [rows] = await this.database.query(`
+			SELECT r.*
 			FROM requests r
 			WHERE r.completed_at IS NULL
-			AND (
-				r.processed_at IS NULL
-				OR (r.completed_at IS NULL AND r.processed_at < (NOW() - interval 2 minute))
-			)
 		`);
 
-		if (!countRows[0].count) {
+		if (rows.length == 0) {
 			return null;
 		}
 
-		const data = [processIdentifier];
-		const orderBys = [];
-		/**
-         * The base query prevents processing more than [MAX_CONCURRENT_SAME_HOST_REQUESTS] requests for the same website at once.
-         * This often ends up slowing down the website's server in a very noticeable way, which ends up slowing the service for all.
-		 *
-		 * It also prevents single instance of the tools service from processing multiple requests to the same host at once, as this
-		 * often affects performance as well (both locally on the browser, and remotely on the website's server due to session locks).
-		 *
-		 * Side note:
-		 * Requests that have been "in progress" for more than 3 minutes are considered not started as they likely have failed.
-		 * These are brought back in the queue automatically in the request below.
-         */
-		const baseQuery = `
-            SELECT r.*
-            FROM requests r
-			LEFT JOIN requests sameHostRequest
-				ON sameHostRequest.hostname = r.hostname
-				AND sameHostRequest.id != r.id
-				AND sameHostRequest.processed_at IS NOT NULL
-				AND sameHostRequest.processed_at >= (NOW() - interval 2 minute)
-				AND sameHostRequest.completed_at IS NULL
-			LEFT JOIN requests sameHostSameProcessRequest
-				ON sameHostSameProcessRequest.hostname = r.hostname
-				AND sameHostSameProcessRequest.id != r.id
-				AND sameHostSameProcessRequest.processed_at IS NOT NULL
-				AND sameHostSameProcessRequest.processed_at >= (NOW() - interval 2 minute)
-				AND sameHostSameProcessRequest.completed_at IS NULL
-				AND sameHostSameProcessRequest.processed_by = ?
-            WHERE r.completed_at IS NULL
-			AND (
-				r.processed_at IS NULL
-				OR (r.completed_at IS NULL AND r.processed_at < (NOW() - interval 2 minute))
-			)
-			GROUP BY r.id
-			HAVING COUNT(sameHostRequest.id) <= ${MAX_CONCURRENT_SAME_HOST_REQUESTS - 1}
-			AND COUNT(sameHostSameProcessRequest.id) = 0`;
+		return Queue.pickNextRequest(rows, currentUrl);
+	}
 
-		// To speed up processing, same-page requests are prioritized as they prevent unnecessary page reloads
-		if (currentUrl) {
-			orderBys.push("CASE WHEN r.url = ? THEN 0 ELSE 1 END ASC");
-			data.push(currentUrl);
+	/**
+	 * @returns {string} Datetime string from which requests are considered "glitched" and ready to pick up for processing again.
+	 */
+	static getReprocessDate()
+	{
+		const now = new Date();
+		now.setMinutes(now.getMinutes() - 2);
+
+		const offset = now.getTimezoneOffset();
+		const datetimeParts = new Date(now.getTime() + (offset * 60 * 1000)).toISOString().split("T");
+
+		return `${datetimeParts[0]} ${datetimeParts[1].substring(0, 8)}`;
+	}
+
+	/**
+	 * Analyzes a set of requests, selects the next one to process
+	 * and returns it.
+	 *
+	 * @param {array} rows
+	 * @param {string|null} currentUrl
+	 */
+	static pickNextRequest(rows, currentUrl = null) {
+		const pendingCountPerHostname = new Map();
+		const hostnamesCurrentlyProcessedByThisWorker = new Set();
+		const reprocessDate = Queue.getReprocessDate();
+
+		for (const row of rows) {
+			// Requests that have been "processing" for more than 2 minutes
+			if (row.processed_at && row.processed_at <= reprocessDate) {
+				row.processed_at = null;
+				row.processed_by = null;
+			}
+
+			if (row.processed_at) {
+				// Calculate the number of concurrent same-host requests that are currently being processed
+				pendingCountPerHostname.set(row.hostname, (pendingCountPerHostname.get(row.hostname) || 0) + 1);
+
+				// Flag hostnames that are being processed by this very worker at the moment
+				if (row.processed_by == processIdentifier) {
+					hostnamesCurrentlyProcessedByThisWorker.add(row.hostname);
+				}
+			}
 		}
 
-		orderBys.push("priority DESC");
-		orderBys.push("received_at ASC");
+		const filteredRows = rows.filter(row => {
+			// Never process two requests from the same hostname simultaneously on the same worker
+			if (hostnamesCurrentlyProcessedByThisWorker.has(row.hostname)) {
+				return false;
+			}
 
-		// Build and run the actual query
-		await this._waitForDatabaseConnection();
-		const query = baseQuery + (orderBys ? (" ORDER BY " + orderBys.join(", ")) : "");
-		const [rows] = await this.database.query(query, data);
+			// Don't exceed the MAX_CONCURRENT_SAME_HOST_REQUESTS
+			if (pendingCountPerHostname.get(row.hostname) >= MAX_CONCURRENT_SAME_HOST_REQUESTS) {
+				return false;
+			}
 
-		return rows.length ? rows[0] : null;
+			return true;
+		});
+
+		// Prioritize the remaining rows
+		const sortedRows = filteredRows.sort((rowA, rowB) => {
+			// To speed up processing, same-page requests are prioritized as they prevent unnecessary page reloads
+			if (currentUrl) {
+				if (rowA.url == currentUrl) {
+					return -1;
+				}
+
+				if (rowB.url == currentUrl) {
+					return 1;
+				}
+			}
+
+			if (rowA.priority != rowB.priority) {
+				return rowA.priority > rowB.priority ? -1 : 1;
+			}
+
+			if (rowA.received_at != rowB.received_at) {
+				return rowA.received_at > rowB.received_at ? 1 : -1;
+			}
+
+			return 0;
+		});
+
+		return sortedRows[0] || null;
 	}
 
 	async markAsProcessing(requestId) {
