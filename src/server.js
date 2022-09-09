@@ -11,8 +11,10 @@ if (!MOCK_MODE) {
 const app = express();
 const initializeRoutes = require("./router");
 const initializeAuthentication = require("./utils/authentication");
+const morgan = require("morgan");
 
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan("tiny"));
 
 // Initialize the app
 initializeAuthentication(app);
