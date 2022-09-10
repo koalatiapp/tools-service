@@ -245,14 +245,30 @@ module.exports = class Queue {
 
 	async markAsCompleted(request, processingTime) {
 		await this._waitForDatabaseConnection();
-		return await this.database.query(`
-            UPDATE requests
-            SET completed_at = NOW(),
-            processing_time = ?
-            WHERE url = ?
-			AND tool = ?
-			AND completed_at IS NULL
-        `, [processingTime, request.url, request.tool]);
+
+		const completionPromises = [
+			this.database.query(`
+				DELETE FROM requests
+				WHERE url = ?
+				AND tool = ?
+				AND completed_at IS NULL
+			`, [request.url, request.tool]),
+		];
+
+		if (processingTime) {
+			completionPromises.push(
+				this.database.query(`
+					INSERT INTO average_processing_times (tool, request_count, average_processing_time, total_processing_time)
+					VALUES(?, 1, ?, ?)
+					ON DUPLICATE KEY UPDATE
+					request_count = request_count + 1,
+					average_processing_time = (total_processing_time + ?) / (request_count),
+					total_processing_time = total_processing_time + ?
+				`, [request.tool, processingTime, processingTime, processingTime, processingTime])
+			);
+		}
+
+		return await Promise.allSettled(completionPromises);
 	}
 
 	async pendingCount() {
@@ -279,53 +295,15 @@ module.exports = class Queue {
 	async getAverageProcessingTimes() {
 		await this._waitForDatabaseConnection();
 
-		const timesByTool = {
-			lowPriority: {},
-			highPriority: {},
-			average: {},
-		};
-		const [lowPriorityRows] = await this.database.query(`
-            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(TIMESTAMPDIFF(SECOND, completed_at, received_at))) AS completion_time
-            FROM requests
-            WHERE completed_at IS NOT NULL
-            AND priority = 1
-            GROUP BY tool
-            LIMIT 10000;
-        `);
-		const [highPriorityRows] = await this.database.query(`
-            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(TIMESTAMPDIFF(SECOND, completed_at, received_at))) AS completion_time
-            FROM requests
-            WHERE completed_at IS NOT NULL
-            AND priority > 1
-            GROUP BY tool
-            LIMIT 10000;
-        `);
-		const [averageRows] = await this.database.query(`
-            SELECT tool, ROUND(AVG(processing_time)) AS processing_time, ROUND(AVG(TIMESTAMPDIFF(SECOND, completed_at, received_at))) AS completion_time
-            FROM requests
-            WHERE completed_at IS NOT NULL
-            GROUP BY tool
-            LIMIT 10000;
+		const timesByTool = {};
+		const [processingTimeRows] = await this.database.query(`
+            SELECT tool, average_processing_time AS processing_time
+            FROM average_processing_times
         `);
 
-		for (const row of lowPriorityRows) {
-			timesByTool.lowPriority[row.tool] = {
+		for (const row of processingTimeRows) {
+			timesByTool[row.tool] = {
 				processing_time: row.processing_time,
-				completion_time: row.completion_time
-			};
-		}
-
-		for (const row of highPriorityRows) {
-			timesByTool.highPriority[row.tool] = {
-				processing_time: row.processing_time,
-				completion_time: row.completion_time
-			};
-		}
-
-		for (const row of averageRows) {
-			timesByTool.average[row.tool] = {
-				processing_time: row.processing_time,
-				completion_time: row.completion_time
 			};
 		}
 

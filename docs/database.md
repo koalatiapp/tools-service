@@ -29,4 +29,11 @@ CREATE INDEX requests_id ON requests (id);
 CREATE INDEX requests_signature ON requests (url(512), tool);
 CREATE INDEX requests_hostname ON requests (hostname);
 CREATE INDEX requests_processed_by ON requests (processed_by);
+CREATE TABLE average_processing_times (
+    tool VARCHAR(100) PRIMARY KEY,
+	request_count BIGINT DEFAULT 0,
+	average_processing_time BIGINT NULL,
+	total_processing_time BIGINT NULL
+);
+CREATE INDEX average_processing_times_tool ON average_processing_times (tool);
 ```

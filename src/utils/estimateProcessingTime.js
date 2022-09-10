@@ -16,7 +16,7 @@ async function getAverageTimeForTool(tool) {
 	const fallbackTime = 3000;
 
 	try {
-		const timesByTool = (await timesByToolPromise).average;
+		const timesByTool = await timesByToolPromise;
 		const toolEstimates = timesByTool[tool] || {};
 
 		return parseInt(toolEstimates.processing_time || fallbackTime);
