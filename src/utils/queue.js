@@ -99,8 +99,7 @@ module.exports = class Queue {
 		const [rows] = await this.database.query(`
             SELECT *
             FROM requests
-            WHERE completed_at IS NULL
-            AND url = ?
+            WHERE url = ?
             AND tool = ?
         `, [url, tool]);
 		return rows.length > 0 ? rows[0] : null;
@@ -116,8 +115,7 @@ module.exports = class Queue {
 		const [rows] = await this.database.query(`
             SELECT *
             FROM requests
-            WHERE completed_at IS NULL
-            AND url LIKE ?
+            WHERE url LIKE ?
         `, [url + "%"]);
 
 		return rows.length > 0 ? rows : [];
@@ -135,11 +133,7 @@ module.exports = class Queue {
 	async next(currentUrl = null) {
 		// Build and run the actual query
 		await this._waitForDatabaseConnection();
-		const [rows] = await this.database.query(`
-			SELECT r.*
-			FROM requests r
-			WHERE r.completed_at IS NULL
-		`);
+		const [rows] = await this.database.query("SELECT r.* FROM requests r");
 
 		if (rows.length == 0) {
 			return null;
@@ -251,7 +245,6 @@ module.exports = class Queue {
 				DELETE FROM requests
 				WHERE url = ?
 				AND tool = ?
-				AND completed_at IS NULL
 			`, [request.url, request.tool]),
 		];
 
@@ -277,7 +270,6 @@ module.exports = class Queue {
             SELECT COUNT(*) AS "count"
             FROM requests
             WHERE processed_at IS NOT NULL
-            AND completed_at IS NULL
         `);
 		return rows.count;
 	}
