@@ -30,6 +30,7 @@ module.exports = (app) => {
 	app.use(function (err, _req, res, _next) {
 		if (err.name === "UnauthorizedError") {
 			res.status(401).send("Invalid bearer token.");
+			console.error(err);
 		}
 	});
 };
