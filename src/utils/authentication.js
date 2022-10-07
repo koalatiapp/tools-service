@@ -17,7 +17,9 @@ module.exports = (app) => {
 	app.use(function (req, res, next) {
 		if (req.auth.access_token != AUTH_ACCESS_TOKEN) {
 			res.status(401).send("Invalid access token.");
+			return;
 		}
+
 		next();
 	});
 
