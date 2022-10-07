@@ -10,6 +10,7 @@ An `.env` file can be added at the root of the project to define these; simply u
 | DATABASE_PASSWORD *             | String   | Database password string, as accepted by [mysql2](https://www.npmjs.com/package/mysql2)                 |
 | DATABASE_NAME *                 | String   | Database name string, as accepted by [mysql2](https://www.npmjs.com/package/mysql2)                     |
 | DATABASE_CA_CERT                | String   | Path to your CA certificate file ([learn more](https://planetscale.com/docs/concepts/secure-connections#ca-root-configuration))               |
+| DATABASE_REJECT_UNAUTHORIZED    | String   | Boolean indicating if unauthorized SSL connections are allowed. Using valid CA certificate configuration is recommended over this option. |
 | PORT                            | Integer  | Port number for the web service (default: `3000`)                                                       |
 | WEBHOOK_HOST                    | String   | Webhook hostname to push completions and errors to                                                      |
 | WEBHOOK_PATH                    | String   | Webhook URL path to push completions and errors to                                                      |

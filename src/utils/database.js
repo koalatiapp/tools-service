@@ -1,5 +1,7 @@
 const fs = require("fs");
 const mysql = require("mysql2/promise");
+let hasCheckedToCreateTables = false;
+let schemaCreationPromise = null;
 
 module.exports = async () => {
 	const config = {
@@ -9,6 +11,7 @@ module.exports = async () => {
 		database: process.env.DATABASE_NAME,
 		ssl: {
 			ca: fs.readFileSync(process.env.DATABASE_CA_CERT || "/etc/ssl/certs/ca-certificates.crt"),
+			rejectUnauthorized: !["0", "false"].includes(process.env.DATABASE_REJECT_UNAUTHORIZED),
 		},
 	};
 	let client;
@@ -28,5 +31,40 @@ module.exports = async () => {
 		console.log("closed database connection");
 	});
 
+	if (!hasCheckedToCreateTables) {
+		hasCheckedToCreateTables = true;
+		schemaCreationPromise = checkToCreateDatabaseSchema(client);
+	}
+
+	if (schemaCreationPromise) {
+		await schemaCreationPromise;
+	}
+
 	return client;
 };
+
+async function checkToCreateDatabaseSchema(client)
+{
+	const [rows] = await client.query("SHOW TABLES LIKE 'requests'");
+	const path = require("path");
+
+	if (rows.length) {
+		return;
+	}
+
+	console.log("Initializing the database schema...");
+
+	const schemaSql = fs.readFileSync(path.resolve(__dirname, "../../config/schema.sql")).toString();
+
+	for (let querySql of schemaSql.split(";")) {
+		querySql = querySql.trim();
+
+		if (!querySql || querySql.startsWith("--")) {
+			continue;
+		}
+
+		await client.query(querySql);
+	}
+
+	schemaCreationPromise = null;
+}
