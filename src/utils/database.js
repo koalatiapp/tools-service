@@ -10,7 +10,7 @@ module.exports = async () => {
 		password: process.env.DATABASE_PASSWORD,
 		database: process.env.DATABASE_NAME,
 		ssl: {
-			ca: fs.readFileSync(process.env.DATABASE_CA_CERT || "/etc/ssl/certs/ca-certificates.crt"),
+			ca: process.env.DATABASE_CA_CERT_CONTENTS || fs.readFileSync(process.env.DATABASE_CA_CERT || "/etc/ssl/certs/ca-certificates.crt"),
 			rejectUnauthorized: !["0", "false"].includes(process.env.DATABASE_REJECT_UNAUTHORIZED),
 		},
 	};
