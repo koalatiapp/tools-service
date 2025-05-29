@@ -52,4 +52,4 @@ jobs:
               uses: wei/curl@v1
               with:
                 args: |
-                    -X POST -H \"Content-Type: application/json\" -H \"Authorization: Bearer ${{ secrets.DIGITALOCEAN_DEPLOY_TOKEN }}\" \"https://api.digitalocean.com/v2/apps/${{ secrets.DIGITALOCEAN_APP_ID }}/deployments\"
+                    -o /dev/null -X POST -H \"Content-Type: application/json\" -H \"Authorization: Bearer ${{ secrets.DIGITALOCEAN_DEPLOY_TOKEN }}\" \"https://api.digitalocean.com/v2/apps/${{ secrets.DIGITALOCEAN_APP_ID }}/deployments\"
